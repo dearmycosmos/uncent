@@ -1,0 +1,4256 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="artifact-type" content="narrative">
+<meta name="design-style" content="nocturne">
+<title>Dear my cosmos</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Plus+Jakarta+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  color-scheme: dark;
+
+  /* Nocturne palette tokens */
+  --background: #0a101d;
+  --surface-container-low: #0e1626;
+  --surface-container: #111b2e;
+  --surface-container-high: #17243c;
+  --surface-glass: rgba(14, 22, 38, 0.82);
+  --surface-backdrop: rgba(6, 10, 19, 0.72);
+
+  /* Text */
+  --on-surface: #f2ece1;
+  --on-surface-variant: #9ba8bf;
+  --on-surface-muted: #6e7d99;
+
+  /* Borders */
+  --outline: #384d73;
+  --outline-variant: #21304d;
+
+  /* Accents */
+  --primary: #dfaa5b;
+  --on-primary: #0a101d;
+  --primary-container: #2b261c;
+  --on-primary-container: #f5dcb0;
+  --secondary: #687a99;
+  --tertiary: #7cc4e8;
+  --positive: #52d19c;
+  --warning: #e6a95c;
+  --error: #f27474;
+  --focus: #dfaa5b;
+
+  /* Cream Letter Paper tokens */
+  --paper-cream: #f5efe0;
+  --paper-cream-edge: #e7dec8;
+  --paper-ink: #2c2620;
+  --paper-ink-soft: #63584b;
+  --paper-rule: rgba(99, 88, 75, 0.16);
+  --paper-shadow: 0 22px 60px rgba(4, 8, 18, 0.72);
+
+  /* Speech bubble & glow tokens */
+  --bubble-bg: rgba(17, 27, 46, 0.9);
+  --bubble-border: rgba(223, 170, 91, 0.45);
+  --bubble-glow: 0 0 18px rgba(124, 196, 232, 0.25);
+
+  /* Fonts */
+  --font-headline: 'Noto Sans KR', 'EB Garamond', serif;
+  --font-title-serif: 'EB Garamond', 'Noto Sans KR', serif;
+  --font-body: 'Noto Sans KR', 'Plus Jakarta Sans', sans-serif;
+  --font-label: 'Noto Sans KR', 'JetBrains Mono', monospace;
+
+  /* Type scale */
+  --display-size: clamp(1.75rem, 1.4rem + 1.2vw, 2.35rem);
+  --headline-size: clamp(1.25rem, 1.05rem + 0.6vw, 1.55rem);
+  --subhead-size: clamp(1rem, 0.95rem + 0.25vw, 1.15rem);
+  --body-size: clamp(0.9375rem, 0.9rem + 0.15vw, 1rem);
+  --label-size: 0.75rem;
+
+  /* Radii & Spacing */
+  --rounded: 0.375rem;
+  --rounded-lg: 0.75rem;
+  --rounded-full: 9999px;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2.5rem;
+
+  /* Effects */
+  --hairline: 1px solid var(--outline-variant);
+  --hairline-strong: 1px solid var(--outline);
+  --panel-highlight: inset 0 1px 0 rgba(242, 236, 225, 0.06);
+  --brass-tint: rgba(223, 170, 91, 0.14);
+  --sky-tint: rgba(124, 196, 232, 0.12);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-micro: 140ms;
+  --dur-short: 240ms;
+  --dur-long: 460ms;
+}
+
+/* Base reset */
+*, *::before, *::after { box-sizing: border-box; }
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overflow-x: clip;
+  background-color: var(--background);
+  color: var(--on-surface);
+  font-family: var(--font-body);
+  font-size: var(--body-size);
+  line-height: 1.6;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  user-select: none;
+  -webkit-font-smoothing: antialiased;
+}
+header { position: static !important; }
+
+button, input, select, textarea {
+  font-family: inherit;
+  color: inherit;
+}
+
+button:focus-visible, input:focus-visible, textarea:focus-visible, [tabindex]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Fullscreen Canvas Stage */
+#cosmos-stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  min-height: 500px;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+#cosmos-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+}
+
+/* Ambient Top HUD */
+.hud-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.hud-planet-status {
+  position: absolute;
+  top: var(--space-lg);
+  left: var(--space-lg);
+  pointer-events: auto;
+  font-family: var(--font-label);
+  font-size: var(--label-size);
+  color: var(--on-surface-variant);
+  background: var(--surface-glass);
+  border: var(--hairline);
+  border-radius: var(--rounded-full);
+  padding: var(--space-xs) var(--space-md);
+  backdrop-filter: blur(8px);
+  box-shadow: var(--panel-highlight);
+  letter-spacing: 0;
+}
+
+.hud-title-wrap {
+  position: absolute;
+  top: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  text-align: center;
+}
+
+.cosmos-title {
+  margin: 0;
+  font-family: var(--font-title-serif);
+  font-size: var(--display-size);
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  color: var(--on-surface);
+  cursor: pointer;
+  padding: var(--space-xs) var(--space-md);
+  text-shadow: 0 0 18px rgba(242, 236, 225, 0.32), 0 0 36px rgba(124, 196, 232, 0.16);
+  animation: titleStarTwinkle 5.5s var(--ease-in-out) infinite;
+}
+
+@keyframes titleStarTwinkle {
+  0%, 100% { opacity: 0.84; text-shadow: 0 0 14px rgba(242, 236, 225, 0.25); }
+  50% { opacity: 1; text-shadow: 0 0 24px rgba(242, 236, 225, 0.5), 0 0 42px rgba(223, 170, 91, 0.2); }
+}
+
+.hud-controls {
+  position: absolute;
+  top: var(--space-lg);
+  right: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  pointer-events: auto;
+}
+
+.hud-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 var(--space-sm);
+  border-radius: var(--rounded-full);
+  background: var(--surface-glass);
+  border: var(--hairline);
+  color: var(--on-surface);
+  font-size: var(--label-size);
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  box-shadow: var(--panel-highlight);
+  transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), transform var(--dur-micro) var(--ease-out);
+}
+
+.hud-icon-btn:hover {
+  background: var(--surface-container-high);
+  border-color: var(--outline);
+  transform: translateY(-1px);
+}
+
+.hud-icon-btn.is-admin {
+  border-color: rgba(242, 116, 116, 0.55);
+  color: var(--on-primary-container);
+  background: rgba(43, 22, 28, 0.84);
+}
+
+.hud-bottom-hint {
+  position: absolute;
+  bottom: var(--space-md);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: var(--label-size);
+  color: var(--on-surface-variant);
+  opacity: 0.56;
+  pointer-events: none;
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Speech Bubble Input Bar (replaces browser prompt) */
+.speech-input-bar {
+  position: absolute;
+  bottom: var(--space-xl);
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(460px, calc(100vw - 2rem));
+  background: var(--surface-glass);
+  border: var(--hairline-strong);
+  border-radius: var(--rounded-lg);
+  padding: var(--space-md);
+  box-shadow: var(--panel-highlight), 0 18px 42px rgba(4, 8, 18, 0.7);
+  backdrop-filter: blur(12px);
+  z-index: 45;
+  display: none;
+}
+
+.speech-input-bar.is-open {
+  display: block;
+}
+
+.speech-input-label {
+  display: block;
+  font-size: var(--label-size);
+  color: var(--primary);
+  margin-bottom: var(--space-xs);
+}
+
+.speech-input-row {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: end;
+}
+
+/* Peer Action Popover */
+.peer-popover {
+  position: absolute;
+  z-index: 42;
+  background: var(--surface-glass);
+  border: var(--hairline-strong);
+  border-radius: var(--rounded-lg);
+  padding: var(--space-sm);
+  display: none;
+  flex-direction: column;
+  gap: var(--space-xs);
+  min-width: 170px;
+  backdrop-filter: blur(10px);
+  box-shadow: var(--panel-highlight), 0 12px 30px rgba(4, 8, 18, 0.65);
+}
+
+.peer-popover.is-open {
+  display: flex;
+}
+
+.peer-popover-title {
+  font-size: var(--label-size);
+  color: var(--tertiary);
+  padding: var(--space-xs) var(--space-sm);
+}
+
+/* Chat Request Toast */
+.chat-request-toast {
+  position: absolute;
+  top: 5.25rem;
+  right: var(--space-lg);
+  width: min(300px, calc(100vw - 2rem));
+  background: var(--surface-container);
+  border: var(--hairline-strong);
+  border-radius: var(--rounded-lg);
+  padding: var(--space-md);
+  z-index: 46;
+  display: none;
+  box-shadow: var(--panel-highlight), 0 14px 34px rgba(4, 8, 18, 0.65);
+}
+
+.chat-request-toast.is-open {
+  display: block;
+}
+
+/* Private 1:1 Anonymous Chat Drawer */
+.private-chat-box {
+  position: absolute;
+  bottom: var(--space-lg);
+  right: var(--space-lg);
+  width: min(340px, calc(100vw - 2rem));
+  height: 360px;
+  background: var(--surface-glass);
+  border: var(--hairline-strong);
+  border-radius: var(--rounded-lg);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--panel-highlight), 0 20px 48px rgba(4, 8, 18, 0.72);
+  display: none;
+  flex-direction: column;
+  z-index: 44;
+  overflow: hidden;
+}
+
+.private-chat-box.is-open {
+  display: flex;
+}
+
+.private-chat-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: var(--hairline);
+  background: var(--surface-container-low);
+}
+
+.private-chat-messages {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.chat-msg {
+  max-width: 82%;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--rounded);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.chat-msg.is-mine {
+  align-self: flex-end;
+  background: var(--primary-container);
+  border: 1px solid rgba(223, 170, 91, 0.35);
+  color: var(--on-primary-container);
+}
+
+.chat-msg.is-peer {
+  align-self: flex-start;
+  background: var(--surface-container-high);
+  border: var(--hairline);
+  color: var(--on-surface);
+}
+
+.chat-msg.is-system {
+  align-self: center;
+  max-width: 100%;
+  font-size: var(--label-size);
+  color: var(--on-surface-variant);
+  background: transparent;
+}
+
+.private-chat-form {
+  display: flex;
+  gap: var(--space-xs);
+  padding: var(--space-sm);
+  border-top: var(--hairline);
+  background: var(--surface-container-low);
+}
+
+/* Modal Backdrop & Nocturne Panels */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--surface-backdrop);
+  backdrop-filter: blur(6px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  z-index: 60;
+}
+
+.modal-backdrop.is-open {
+  display: flex;
+}
+
+.nocturne-panel {
+  width: min(680px, 100%);
+  max-height: min(88vh, 760px);
+  overflow-y: auto;
+  background: var(--surface-container);
+  border: var(--hairline-strong);
+  border-radius: var(--rounded-lg);
+  box-shadow: var(--panel-highlight), 0 24px 64px rgba(4, 8, 18, 0.8);
+  padding: var(--space-lg);
+  position: relative;
+}
+
+.nocturne-panel.is-wide {
+  width: min(880px, 100%);
+}
+
+.panel-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: var(--hairline);
+}
+
+.panel-title {
+  margin: 0;
+  font-family: var(--font-headline);
+  font-size: var(--headline-size);
+  font-weight: 500;
+  color: var(--on-surface);
+}
+
+.panel-subtitle {
+  margin: var(--space-xs) 0 0;
+  font-size: var(--label-size);
+  color: var(--primary);
+}
+
+.close-btn {
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: var(--rounded);
+  background: transparent;
+  border: var(--hairline);
+  color: var(--on-surface-variant);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color var(--dur-micro) var(--ease-out), color var(--dur-micro) var(--ease-out);
+}
+
+.close-btn:hover {
+  background: var(--surface-container-high);
+  color: var(--on-surface);
+}
+
+/* Shared Inputs & Buttons */
+.cosmos-input, .cosmos-textarea {
+  width: 100%;
+  background: var(--background);
+  border: var(--hairline-strong);
+  border-radius: var(--rounded);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--on-surface);
+  font-size: var(--body-size);
+}
+
+.cosmos-textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 44px;
+  padding: 0 var(--space-md);
+  border-radius: var(--rounded);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: var(--hairline-strong);
+  background: transparent;
+  color: var(--on-surface);
+  transition: background-color var(--dur-micro) var(--ease-out), border-color var(--dur-micro) var(--ease-out), opacity var(--dur-micro) var(--ease-out);
+}
+
+.btn:hover:not(:disabled) {
+  background: var(--surface-container-high);
+}
+
+.btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+  border-color: var(--primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--on-primary-container);
+  border-color: var(--on-primary-container);
+}
+
+.btn-sm {
+  min-height: 36px;
+  padding: 0 var(--space-sm);
+  font-size: var(--label-size);
+}
+
+/* 10-Planet Space Map */
+.planet-map-stage {
+  position: relative;
+  width: 100%;
+  height: min(56vh, 420px);
+  min-height: 320px;
+  background: radial-gradient(ellipse at 50% 45%, rgba(23, 36, 60, 0.9), rgba(8, 13, 24, 0.98));
+  border: var(--hairline);
+  border-radius: var(--rounded-lg);
+  overflow: hidden;
+}
+
+#planet-map-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.planet-node {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: var(--space-xs);
+  animation: planetDrift 9s var(--ease-in-out) infinite;
+  transition: transform var(--dur-short) var(--ease-out);
+}
+
+@keyframes planetDrift {
+  0%, 100% { margin-top: 0px; margin-left: 0px; }
+  50% { margin-top: -6px; margin-left: 4px; }
+}
+
+.planet-orb-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 148%;
+  height: 38%;
+  border-radius: 50%;
+  border: 1.5px solid rgba(242, 236, 225, 0.34);
+  transform: translate(-50%, -50%) rotate(-16deg);
+  pointer-events: none;
+}
+
+.planet-node:hover:not(:disabled) {
+  transform: translate(-50%, -54%) scale(1.08);
+}
+
+.planet-node:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.planet-orb {
+  border-radius: 50%;
+  position: relative;
+  transition: box-shadow var(--dur-short) var(--ease-out);
+}
+
+.planet-node:hover:not(:disabled) .planet-orb {
+  box-shadow: 0 0 28px rgba(223, 170, 91, 0.55), 0 0 54px rgba(124, 196, 232, 0.32);
+}
+
+.planet-meta {
+  font-family: var(--font-label);
+  font-size: 0.75rem;
+  color: var(--on-surface);
+  background: rgba(10, 16, 29, 0.78);
+  border: var(--hairline);
+  border-radius: var(--rounded-full);
+  padding: 2px 8px;
+  white-space: nowrap;
+}
+
+.planet-meta.is-full {
+  color: var(--error);
+  border-color: rgba(242, 116, 116, 0.4);
+}
+
+/* Cream Letter Paper Modal */
+.letter-modal-shell {
+  width: min(540px, 100%);
+  position: relative;
+}
+
+.cream-paper {
+  position: relative;
+  background-color: var(--paper-cream);
+  background-image:
+    radial-gradient(circle at 18% 22%, rgba(223, 170, 91, 0.12), transparent 55%),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 31px,
+      var(--paper-rule) 31px,
+      var(--paper-rule) 32px
+    );
+  color: var(--paper-ink);
+  padding: var(--space-xl) var(--space-lg);
+  border-radius: var(--rounded);
+  box-shadow: var(--paper-shadow);
+  border: 1px solid var(--paper-cream-edge);
+}
+
+.cream-paper.is-blurred .letter-read-body {
+  filter: blur(7px);
+  user-select: none;
+  opacity: 0.65;
+}
+
+.letter-torn-notice {
+  font-size: var(--label-size);
+  color: var(--on-surface-variant);
+  text-align: center;
+  margin-bottom: var(--space-sm);
+}
+
+.letter-field-label {
+  display: block;
+  font-size: var(--label-size);
+  font-weight: 600;
+  color: var(--paper-ink-soft);
+  margin-bottom: var(--space-xs);
+}
+
+.paper-input, .paper-textarea {
+  width: 100%;
+  background: rgba(255, 252, 244, 0.55);
+  border: 1px solid rgba(99, 88, 75, 0.28);
+  border-radius: var(--rounded);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--paper-ink);
+  font-size: var(--body-size);
+  line-height: 1.7;
+}
+
+.paper-textarea {
+  min-height: 170px;
+  resize: vertical;
+}
+
+.paper-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
+  margin-top: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.paper-btn {
+  min-height: 44px;
+  padding: 0 var(--space-md);
+  border-radius: var(--rounded);
+  border: 1px solid rgba(44, 38, 32, 0.28);
+  background: rgba(255, 252, 244, 0.72);
+  color: var(--paper-ink);
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color var(--dur-micro) var(--ease-out);
+}
+
+.paper-btn:hover {
+  background: rgba(231, 222, 200, 0.95);
+}
+
+.paper-btn-primary {
+  background: var(--paper-ink);
+  color: var(--paper-cream);
+  border-color: var(--paper-ink);
+}
+
+.paper-btn-primary:hover {
+  background: #423930;
+}
+
+.letter-read-to {
+  font-family: var(--font-title-serif);
+  font-size: 1.15rem;
+  font-weight: 500;
+  color: var(--paper-ink);
+  margin-bottom: var(--space-md);
+}
+
+.letter-read-body {
+  font-size: 1rem;
+  line-height: 2;
+  color: var(--paper-ink);
+  white-space: pre-wrap;
+  min-height: 130px;
+  position: relative;
+}
+
+.letter-read-from {
+  margin-top: var(--space-lg);
+  text-align: right;
+  font-size: 0.95rem;
+  color: var(--paper-ink-soft);
+}
+
+.ink-blot {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(44, 38, 32, 0.22) 0%, rgba(44, 38, 32, 0.08) 55%, transparent 75%);
+  pointer-events: none;
+  filter: blur(1px);
+}
+
+/* Constellation Archive Stage */
+.constellation-stage {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  min-height: 260px;
+  background: radial-gradient(circle at 35% 30%, rgba(23, 36, 60, 0.92), rgba(7, 11, 22, 0.98));
+  border: var(--hairline);
+  border-radius: var(--rounded-lg);
+  overflow: hidden;
+  margin-bottom: var(--space-md);
+}
+
+.constellation-star-btn {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.constellation-star-core {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 12px var(--primary), 0 0 24px rgba(223, 170, 91, 0.45);
+  transition: transform var(--dur-micro) var(--ease-out);
+}
+
+.constellation-star-btn.is-kept .constellation-star-core {
+  background: var(--tertiary);
+  box-shadow: 0 0 12px var(--tertiary), 0 0 24px rgba(124, 196, 232, 0.45);
+}
+
+.constellation-star-btn:hover .constellation-star-core {
+  transform: scale(1.45);
+}
+
+/* Grid helpers */
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+  gap: var(--space-sm);
+}
+
+.choice-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 76px;
+  padding: var(--space-sm);
+  border-radius: var(--rounded);
+  background: var(--background);
+  border: var(--hairline-strong);
+  cursor: pointer;
+  font-size: 0.875rem;
+  transition: border-color var(--dur-micro) var(--ease-out), background-color var(--dur-micro) var(--ease-out);
+}
+
+.choice-card:hover {
+  background: var(--surface-container-high);
+}
+
+.choice-card.is-selected {
+  border-color: var(--primary);
+  background: var(--primary-container);
+  color: var(--on-primary-container);
+}
+
+.mixer-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.mixer-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.mixer-row-head {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.875rem;
+}
+
+.cosmos-range {
+  width: 100%;
+  accent-color: var(--primary);
+  cursor: pointer;
+}
+
+.admin-section {
+  margin-bottom: var(--space-lg);
+}
+
+.admin-section-title {
+  font-size: var(--label-size);
+  color: var(--tertiary);
+  margin: 0 0 var(--space-sm);
+}
+
+.planet-admin-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(130px, 100%), 1fr));
+  gap: var(--space-xs);
+}
+
+.guide-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  color: var(--on-surface-variant);
+}
+
+.guide-list strong {
+  color: var(--on-surface);
+}
+
+.inline-msg {
+  font-size: var(--label-size);
+  color: var(--error);
+  margin-top: var(--space-xs);
+  min-height: 1.2em;
+}
+
+@media (max-width: 640px) {
+  .hud-planet-status {
+    top: var(--space-sm);
+    left: var(--space-sm);
+  }
+  .hud-controls {
+    top: var(--space-sm);
+    right: var(--space-sm);
+  }
+  .hud-title-wrap {
+    top: 3.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+</style>
+</head>
+<body>
+<main id="cosmos-stage">
+  <canvas id="cosmos-canvas" aria-label="Dear my cosmos 밤하늘 인터랙티브 캔버스"></canvas>
+
+  <!-- Subtle Floating HUD -->
+  <div class="hud-layer">
+    <div id="hud-planet-status" class="hud-planet-status">우주 지도 대기 중</div>
+
+    <div class="hud-title-wrap">
+      <h1 id="cosmos-title" class="cosmos-title" title="Dear my cosmos" onclick="handleTitleSecretClick()">Dear my cosmos</h1>
+    </div>
+
+    <div class="hud-controls">
+      <button type="button" class="hud-icon-btn" onclick="openSoundModal()" aria-label="소리 조절" title="소리 조절">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        </svg>
+        <span>소리</span>
+      </button>
+      <button type="button" class="hud-icon-btn" onclick="openArchiveModal()" aria-label="편지 보관함" title="편지 보관함">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+        </svg>
+        <span>보관함</span>
+      </button>
+      <button type="button" class="hud-icon-btn" onclick="openDressModal()" aria-label="캐릭터 꾸미기" title="캐릭터 꾸미기">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <path d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23z"></path>
+        </svg>
+        <span>꾸미기</span>
+      </button>
+      <button type="button" id="btn-admin" class="hud-icon-btn is-admin" style="display: none;" onclick="openAdminModal()" aria-label="관리자 탭" title="관리자 탭">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true">
+          <circle cx="12" cy="12" r="3"></circle>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+        </svg>
+        <span>관리자</span>
+      </button>
+    </div>
+
+    <div class="hud-bottom-hint">하늘을 클릭하면 궤도가 보이게 됩니다.</div>
+  </div>
+
+  <!-- Inline Speech Bubble Input (Enter or Click Peer) -->
+  <form id="speech-input-bar" class="speech-input-bar" onsubmit="submitSpeechBubble(event)">
+    <label for="speech-input-field" class="speech-input-label">별 여행자에게 전할 말을 입력하세요:</label>
+    <div class="speech-input-row">
+      <input type="text" id="speech-input-field" class="cosmos-input" maxlength="80" placeholder="밤하늘에 띄울 짧은 한마디…">
+      <button type="submit" class="btn btn-primary btn-sm">전하기</button>
+      <button type="button" class="btn btn-sm" onclick="closeSpeechInput()">취소</button>
+    </div>
+  </form>
+
+  <!-- Peer Action Popover -->
+  <div id="peer-action-popover" class="peer-popover">
+    <div class="peer-popover-title">익명의 별 여행자</div>
+    <button type="button" class="btn btn-sm" onclick="triggerSpeechForPeer()">말풍선 띄우기</button>
+    <button type="button" class="btn btn-primary btn-sm" onclick="sendChatRequestToPeer()">1:1 대화 요청</button>
+    <button type="button" class="btn btn-sm" onclick="closePeerPopover()">닫기</button>
+  </div>
+
+  <!-- Incoming 1:1 Chat Request -->
+  <div id="chat-request-toast" class="chat-request-toast">
+    <p id="chat-request-text" style="margin: 0 0 var(--space-sm); font-size: 0.9rem;">익명의 여행자가 조용한 대화를 요청했습니다.</p>
+    <div style="display: flex; gap: var(--space-sm); justify-content: flex-end;">
+      <button type="button" class="btn btn-sm" onclick="respondChatRequest(false)">거절</button>
+      <button type="button" class="btn btn-primary btn-sm" onclick="respondChatRequest(true)">수락</button>
+    </div>
+  </div>
+
+  <!-- 1:1 Private Anonymous Chat Box -->
+  <section id="private-chat-box" class="private-chat-box" aria-label="1:1 익명 대화창">
+    <div class="private-chat-head">
+      <span style="font-size: var(--label-size); color: var(--tertiary);">익명의 1:1 대화</span>
+      <button type="button" class="btn btn-sm" onclick="endPrivateChat(true)">대화 끝내기</button>
+    </div>
+    <div id="private-chat-messages" class="private-chat-messages"></div>
+    <form class="private-chat-form" onsubmit="submitPrivateChat(event)">
+      <input type="text" id="private-chat-input" class="cosmos-input" maxlength="160" placeholder="마음을 전해 보세요…">
+      <button type="submit" class="btn btn-primary btn-sm">전송</button>
+    </form>
+  </section>
+</main>
+
+<!-- 1. First-Time Play Guide Modal -->
+<div id="guide-modal" class="modal-backdrop">
+  <div class="nocturne-panel" role="dialog" aria-modal="true" aria-labelledby="guide-title">
+    <div class="panel-header">
+      <div>
+        <h2 id="guide-title" class="panel-title">Dear my cosmos 안내</h2>
+        <p class="panel-subtitle">지나간 인연에게 미처 전하지 못한 말을 별에 담아 보내는 밤</p>
+      </div>
+    </div>
+    <ul class="guide-list">
+      <li><strong>캐릭터 이동:</strong> 마우스를 따라 걷거나 들판·연못 위의 원하는 지점을 클릭해 자유롭게 걸을 수 있습니다.</li>
+      <li><strong>점프:</strong> 스페이스바를 누르면 가볍게 점프하며, 연못 위에서는 작은 물방울과 파문이 일렁입니다.</li>
+      <li><strong>궤적 생성:</strong> 별이나 버튼이 없는 밤하늘을 클릭·드래그하면 궤적이 그려지며 바이올린 화음이 울립니다.</li>
+      <li><strong>별에 편지 쓰기:</strong> 궤적 위의 반짝이는 별을 클릭해 편지를 적고 간직하거나, 60초 뒤 별똥별로 날려 보낼 수 있습니다.</li>
+      <li><strong>떨어진 편지 발견:</strong> 들판이나 연못에 내려앉은 별을 클릭하면 캐릭터가 걸어가 편지를 열어 봅니다.</li>
+      <li><strong>보관과 놓아주기:</strong> 자연의 편지는 연못 위의 종이배로, 다른 여행자의 편지는 개인 별자리 보관함에 담기며, 놓아주기를 선택하면 빛 입자가 되어 흩어집니다.</li>
+      <li><strong>익명의 대화:</strong> 같은 행성에 머무는 다른 여행자를 클릭하거나 Enter 키를 눌러 조용히 마음을 나눌 수 있습니다.</li>
+    </ul>
+    <div style="display: flex; justify-content: flex-end; margin-top: var(--space-lg);">
+      <button type="button" class="btn btn-primary" onclick="dismissGuideModal()">밤하늘로 들어가기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 2. 10-Planet Space Map Modal -->
+<div id="planet-map-modal" class="modal-backdrop">
+  <div class="nocturne-panel is-wide" role="dialog" aria-modal="true" aria-labelledby="planet-map-title">
+    <div class="panel-header">
+      <div>
+        <h2 id="planet-map-title" class="panel-title">우주 지도 — 행성 선택</h2>
+        <p class="panel-subtitle">머물고 싶은 밤하늘 행성을 하나 선택해 주세요 (행성당 최대 5명)</p>
+      </div>
+      <div id="net-status-label" style="font-size: var(--label-size); color: var(--on-surface-variant);">실시간 연결 확인 중…</div>
+    </div>
+    <div id="planet-map-stage" class="planet-map-stage">
+      <canvas id="planet-map-bg"></canvas>
+      <div id="planet-nodes-layer"></div>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: var(--space-md); gap: var(--space-sm); flex-wrap: wrap;">
+      <span style="font-size: var(--label-size); color: var(--on-surface-variant);">혼자서 고요히 풍경을 바라보거나, 같은 행성의 여행자와 만날 수 있습니다.</span>
+      <button type="button" class="btn btn-sm" onclick="retryPlanetSync()">연결 다시 시도</button>
+    </div>
+  </div>
+</div>
+
+<!-- 3. Cream Paper Letter Write Modal -->
+<div id="write-letter-modal" class="modal-backdrop">
+  <div class="letter-modal-shell" role="dialog" aria-modal="true" aria-labelledby="write-modal-title">
+    <div class="cream-paper">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-md);">
+        <h2 id="write-modal-title" style="margin: 0; font-family: var(--font-title-serif); font-size: 1.35rem; color: var(--paper-ink);">별에 띄우는 편지</h2>
+        <button type="button" class="paper-btn" style="min-height: 36px; padding: 0 12px;" onclick="closeWriteModal()">닫기</button>
+      </div>
+      <div style="margin-bottom: var(--space-md);">
+        <label for="letter-to-input" class="letter-field-label">To. (필수)</label>
+        <input type="text" id="letter-to-input" class="paper-input" maxlength="40" placeholder="마음을 전하고 싶은 대상">
+      </div>
+      <div style="margin-bottom: var(--space-md);">
+        <label for="letter-content-input" class="letter-field-label">Content. (필수)</label>
+        <textarea id="letter-content-input" class="paper-textarea" maxlength="600" placeholder="지나간 인연에게 미처 전하지 못한 말을 적어 보세요…"></textarea>
+      </div>
+      <div>
+        <label for="letter-from-input" class="letter-field-label">From. (선택)</label>
+        <input type="text" id="letter-from-input" class="paper-input" maxlength="40" placeholder="남기지 않아도 괜찮습니다">
+      </div>
+      <div id="write-error-msg" class="inline-msg"></div>
+      <div class="paper-actions">
+        <button type="button" class="paper-btn" onclick="keepWrittenLetter()">간직하기</button>
+        <button type="button" class="paper-btn paper-btn-primary" onclick="sendWrittenLetter()">보내기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. Cream Paper Letter Read Modal (Supports Torn Paper & Blurred Countdown) -->
+<div id="read-letter-modal" class="modal-backdrop">
+  <div class="letter-modal-shell" role="dialog" aria-modal="true" aria-labelledby="read-letter-to">
+    <div id="read-torn-notice" class="letter-torn-notice" style="display: none;"></div>
+    <div id="read-cream-paper" class="cream-paper">
+      <div id="read-ink-blots"></div>
+      <div id="read-letter-to" class="letter-read-to"></div>
+      <div id="read-letter-body" class="letter-read-body"></div>
+      <div id="read-letter-from" class="letter-read-from"></div>
+      <div id="read-paper-actions" class="paper-actions"></div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. Personal Constellation Archive Modal -->
+<div id="archive-modal" class="modal-backdrop">
+  <div class="nocturne-panel" role="dialog" aria-modal="true" aria-labelledby="archive-title">
+    <div class="panel-header">
+      <div>
+        <h2 id="archive-title" class="panel-title">개인 별자리 보관함</h2>
+        <p class="panel-subtitle">금빛 별은 발견하여 품은 편지, 푸른 별은 스스로 간직한 편지입니다</p>
+      </div>
+      <button type="button" class="close-btn" onclick="closeModal('archive-modal')" aria-label="닫기">✕</button>
+    </div>
+    <div id="constellation-stage" class="constellation-stage">
+      <div id="constellation-empty" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--on-surface-variant); font-size: 0.9rem; text-align: center; padding: var(--space-lg);">
+        아직 별자리에 담긴 편지가 없습니다. 별에 편지를 적어 간직하거나 들판에 떨어진 편지를 보관해 보세요.
+      </div>
+      <div id="constellation-stars-layer"></div>
+    </div>
+    <div id="archive-boat-summary" style="font-size: var(--label-size); color: var(--tertiary);"></div>
+  </div>
+</div>
+
+<!-- 6. Character Dress-Up Modal -->
+<div id="dress-modal" class="modal-backdrop">
+  <div class="nocturne-panel" role="dialog" aria-modal="true" aria-labelledby="dress-title">
+    <div class="panel-header">
+      <div>
+        <h2 id="dress-title" class="panel-title">작은 아이 꾸미기</h2>
+        <p class="panel-subtitle">착용한 소품은 같은 행성의 모든 여행자에게 함께 보입니다</p>
+      </div>
+      <button type="button" class="close-btn" onclick="closeModal('dress-modal')" aria-label="닫기">✕</button>
+    </div>
+    <div id="dress-choice-grid" class="choice-grid">
+      <button type="button" class="choice-card" data-acc="none" onclick="selectAccessory('none')">소품 없음</button>
+      <button type="button" class="choice-card" data-acc="scarf" onclick="selectAccessory('scarf')">파란 목도리</button>
+      <button type="button" class="choice-card" data-acc="hat" onclick="selectAccessory('hat')">노란 모자</button>
+      <button type="button" class="choice-card" data-acc="ribbon" onclick="selectAccessory('ribbon')">핑크 리본</button>
+      <button type="button" class="choice-card" data-acc="tie" onclick="selectAccessory('tie')">초록 넥타이</button>
+      <button type="button" class="choice-card" data-acc="glasses" onclick="selectAccessory('glasses')">흰 안경</button>
+    </div>
+  </div>
+</div>
+
+<!-- 7. Sound Mixer Modal -->
+<div id="sound-modal" class="modal-backdrop">
+  <div class="nocturne-panel" role="dialog" aria-modal="true" aria-labelledby="sound-title">
+    <div class="panel-header">
+      <div>
+        <h2 id="sound-title" class="panel-title">밤의 소리 조절</h2>
+        <p class="panel-subtitle">원하는 고요함의 깊이에 맞추어 음량을 조절하세요</p>
+      </div>
+      <button type="button" class="close-btn" onclick="closeModal('sound-modal')" aria-label="닫기">✕</button>
+    </div>
+    <div class="mixer-group">
+      <div class="mixer-row">
+        <div class="mixer-row-head">
+          <label for="vol-bgm">배경음 (피아노 · 밤바람 · 풀벌레 · 잔잔한 물결)</label>
+          <span id="vol-bgm-val">55%</span>
+        </div>
+        <input type="range" id="vol-bgm" class="cosmos-range" min="0" max="100" value="55" oninput="updateVolume('bgm', this.value)">
+      </div>
+      <div class="mixer-row">
+        <div class="mixer-row-head">
+          <label for="vol-sfx">별빛 및 인터랙션 효과음 (바이올린 · 피아노 · 실로폰)</label>
+          <span id="vol-sfx-val">70%</span>
+        </div>
+        <input type="range" id="vol-sfx" class="cosmos-range" min="0" max="100" value="70" oninput="updateVolume('sfx', this.value)">
+      </div>
+      <div class="mixer-row">
+        <div class="mixer-row-head">
+          <label for="vol-water">물소리 (연못 위 발걸음 · 점프 물방울)</label>
+          <span id="vol-water-val">65%</span>
+        </div>
+        <input type="range" id="vol-water" class="cosmos-range" min="0" max="100" value="65" oninput="updateVolume('water', this.value)">
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. Admin Panel Modal (No Password, Immediate Cloak) -->
+<div id="admin-modal" class="modal-backdrop">
+  <div class="nocturne-panel" role="dialog" aria-modal="true" aria-labelledby="admin-title">
+    <div class="panel-header">
+      <div>
+        <h2 id="admin-title" class="panel-title">우주 관리자 제어실</h2>
+        <p class="panel-subtitle">선택한 연출은 현재 행성에 머무는 모든 여행자에게 동시에 펼쳐집니다</p>
+      </div>
+      <button type="button" class="close-btn" onclick="closeModal('admin-modal')" aria-label="닫기">✕</button>
+    </div>
+
+    <div class="admin-section">
+      <h3 class="admin-section-title">하늘 연출 및 편지 낙하</h3>
+      <div class="choice-grid">
+        <button type="button" class="btn" onclick="triggerAdminEffect('meteors')">별똥별 수동 낙하</button>
+        <button type="button" class="btn" onclick="triggerAdminEffect('fireworks')">별빛 불꽃놀이</button>
+        <button type="button" class="btn" onclick="triggerAdminEffect('aurora')">초록빛 오로라</button>
+        <button type="button" class="btn btn-primary" onclick="triggerAdminEffect('dropLetter')">편지 별 수동 낙하</button>
+      </div>
+    </div>
+
+    <div class="admin-section">
+      <h3 class="admin-section-title">하늘색 팔레트</h3>
+      <div class="choice-grid">
+        <button type="button" class="btn btn-sm" onclick="triggerAdminSky('Deep Cosmos')">Deep Cosmos</button>
+        <button type="button" class="btn btn-sm" onclick="triggerAdminSky('Aurora Green')">Aurora Green</button>
+        <button type="button" class="btn btn-sm" onclick="triggerAdminSky('Twilight Violet')">Twilight Violet</button>
+        <button type="button" class="btn btn-sm" onclick="triggerAdminSky('Sunset Rose')">Sunset Rose</button>
+        <button type="button" class="btn btn-sm" onclick="triggerAdminSky('Midnight Blue')">Midnight Blue</button>
+      </div>
+    </div>
+
+    <div class="admin-section" style="margin-bottom: 0;">
+      <h3 class="admin-section-title">행성 이동 (관리자 전용)</h3>
+      <div id="admin-planet-list" class="planet-admin-grid"></div>
+    </div>
+  </div>
+</div>
+
+<api-shim></api-shim>
+
+<script>
+// =========================================================================
+// 1. GLOBAL STATE & CONFIGURATION (Exact alignment with spec & backend)
+// =========================================================================
+const BACKEND_URL = `dear-my-cosmos.onrender.com`;
+const MAX_PER_PLANET = 5;
+const MAX_TRAJECTORIES = 8;
+const COUNTDOWN_MS = 60000;
+const AUTO_SKY_INTERVAL_MS = 180000; // 3 minutes
+const AUTO_DROP_INTERVAL_MS = 60000; // 1 minute
+
+const PLANETS = [
+  { id: `planet01`, name: `Planet 01`, xPct: 16, yPct: 30, size: 54, c1: `#4a73b8`, c2: `#18294a`, ring: false },
+  { id: `planet02`, name: `Planet 02`, xPct: 34, yPct: 22, size: 46, c1: `#64b5a6`, c2: `#183c3c`, ring: true },
+  { id: `planet03`, name: `Planet 03`, xPct: 54, yPct: 28, size: 60, c1: `#b589d6`, c2: `#351f52`, ring: false },
+  { id: `planet04`, name: `Planet 04`, xPct: 74, yPct: 20, size: 44, c1: `#dfaa5b`, c2: `#543818`, ring: false },
+  { id: `planet05`, name: `Planet 05`, xPct: 86, yPct: 44, size: 52, c1: `#d87a8c`, c2: `#4a1f2d`, ring: true },
+  { id: `planet06`, name: `Planet 06`, xPct: 22, yPct: 68, size: 50, c1: `#7cc4e8`, c2: `#1a3d56`, ring: false },
+  { id: `planet07`, name: `Planet 07`, xPct: 42, yPct: 58, size: 42, c1: `#98a9df`, c2: `#232d54`, ring: false },
+  { id: `planet08`, name: `Planet 08`, xPct: 62, yPct: 72, size: 58, c1: `#52d19c`, c2: `#133d32`, ring: true },
+  { id: `planet09`, name: `Planet 09`, xPct: 80, yPct: 76, size: 48, c1: `#c9886b`, c2: `#46261d`, ring: false },
+  { id: `planet10`, name: `Planet 10`, xPct: 12, yPct: 52, size: 40, c1: `#c6b4df`, c2: `#2c2345`, ring: false }
+];
+
+const SKY_PALETTES = {
+  'Deep Cosmos':     { top: [7, 12, 26],   mid: [14, 24, 48],  horizon: [24, 38, 68],  ambient: [110, 155, 220] },
+  'Aurora Green':    { top: [6, 20, 26],   mid: [12, 42, 46],  horizon: [22, 66, 64],  ambient: [82, 209, 156] },
+  'Twilight Violet': { top: [15, 11, 34],  mid: [36, 22, 64],  horizon: [62, 36, 86],  ambient: [176, 134, 232] },
+  'Sunset Rose':     { top: [24, 14, 34],  mid: [56, 28, 54],  horizon: [96, 48, 72],  ambient: [232, 148, 168] },
+  'Midnight Blue':   { top: [5, 10, 24],   mid: [11, 24, 58],  horizon: [20, 44, 92],  ambient: [108, 168, 240] }
+};
+
+const AUTO_SKY_KEYS = ['Midnight Blue', 'Deep Cosmos', 'Twilight Violet', 'Sunset Rose'];
+
+const NATURE_LETTERS = [
+  {
+    id: `nat-1`,
+    to: `고요한 밤을 건너는 너에게`,
+    content: `오늘 밤 네가 올려다본 하늘의 별빛은 사실 아주 먼 과거에서 출발해 지금 막 너에게 닿은 마음이야.\n\n미처 건네지 못했던 말들도 그렇게 천천히, 가장 다정한 시간에 도착하곤 한단다. 바람이 너의 어깨를 스치면 내가 잠시 곁에 머물다 간 줄 알아줘.`,
+    from: `밤바람`
+  },
+  {
+    id: `nat-2`,
+    to: `어딘가 멈춰 서 있는 이에게`,
+    content: `연못의 물결은 돌이 닿은 자리마다 원을 그리며 퍼져 나가지만, 결국에는 다시 고요한 거울로 돌아와 하늘을 품는단다.\n\n잠시 흔들리는 밤이 오더라도 너의 수면 아래에는 늘 빛이 비치고 있어.`,
+    from: `연못의 수면`
+  },
+  {
+    id: `nat-3`,
+    to: `지나간 궤적을 그리워하는 너에게`,
+    content: `두 개의 별이 잠시 스쳐 지나갔다고 해서 그 만남이 헛된 것은 아니야. 잠깐이라도 서로의 어둠을 비춰 주었다면 그 빛은 우주 어딘가에 영원히 남아 있거든.\n\n오늘 밤은 너 자신에게도 다정한 문장을 하나 남겨 주렴.`,
+    from: `은하수`
+  },
+  {
+    id: `nat-4`,
+    to: `작은 발걸음의 여행자에게`,
+    content: `풀잎 사이에 내려앉은 이슬들은 누구의 이름도 묻지 않고 그저 밤새 반짝여.\n\n이름을 밝히지 않아도 괜찮은 밤이야. 그저 네가 걷는 자리마다 작은 반딧불이 하나씩 따라갈 테니 천천히 걸어도 좋아.`,
+    from: `들판의 풀빛`
+  },
+  {
+    id: `nat-5`,
+    to: `말을 아끼던 어느 날의 너에게`,
+    content: `입 밖으로 꺼내지 못한 진심은 사라지는 게 아니라 별의 심장 속에 조용히 접혀 보관된다고 해.\n\n언젠가 너의 마음이 준비되었을 때, 종이배처럼 가볍게 띄워 보내도 늦지 않아.`,
+    from: `새벽의 별빛`
+  },
+  {
+    id: `nat-6`,
+    to: `잠들지 못한 밤의 친구에게`,
+    content: `세상이 모두 잠든 뒤에도 저 높은 곳에서는 구름이 천천히 자리를 옮기고 있어. 아무도 보지 않는다고 해서 아무 일도 일어나지 않는 건 아니야.\n\n너의 조용한 시간도 분명 어딘가로 잘 흘러가고 있단다.`,
+    from: `밤구름`
+  },
+  {
+    id: `nat-7`,
+    to: `물가를 거니는 검은 아이에게`,
+    content: `물이 발끝에 닿을 때 들리는 작은 찰박거림을 들어 봐. 그 소리는 네가 지금 이 밤에 분명히 살아 숨 쉬고 있다는 다정한 신호야.\n\n오늘의 발걸음은 모두 이 밤이 기억할게.`,
+    from: `반딧불이`
+  },
+  {
+    id: `nat-8`,
+    to: `먼 곳으로 마음을 띄워 보낸 너에게`,
+    content: `네가 보낸 작은 빛은 지금쯤 전혀 모르는 누군가의 하늘 아래로 천천히 내려앉고 있을지도 몰라.\n\n닿을 수 없다고 생각했던 마음들이 우연처럼 이어지는 기적을 조용히 믿어 보자.`,
+    from: `유성우`
+  }
+];
+
+// Required global structure
+let currentPlanetId = null;
+const player = {
+  id: `local_` + Math.random().toString(36).slice(2, 10),
+  x: 0.5,
+  y: 0.78,
+  targetX: null,
+  targetY: null,
+  facing: 1,
+  isMoving: false,
+  isJumping: false,
+  jumpVel: 0,
+  jumpOffset: 0,
+  walkPhase: 0,
+  inPond: false,
+  accessory: `none`,
+  cloak: false,
+  cloakWetness: 0,
+  pondStaySec: 0,
+  cloakWave: 0,
+  speechText: ``,
+  speechUntil: 0,
+  pendingAction: null
+};
+const remoteTabs = {}; // dictionary keyed by peerId
+
+let isAdmin = false;
+let titleClickCount = 0;
+let titleClickTimer = null;
+
+// Shared planet state
+let planetCounts = {};
+PLANETS.forEach(p => { planetCounts[p.id] = 0; });
+
+let skyState = {
+  currentName: `Deep Cosmos`,
+  targetName: `Deep Cosmos`,
+  blend: 1,
+  auroraActive: false,
+  auroraAlpha: 0,
+  flashAlpha: 0,
+  flashColor: [255, 230, 180]
+};
+
+let trajectories = [];       // Sky trajectories + stars
+let fallenLetters = [];      // Interactive fallen stars on ground/pond
+let sharedMailbox = [];      // User-sent letters whose 60s wait finished
+let soaringStars = [];       // 60s launched shooting stars
+let bgMeteors = [];          // Background & admin decorative shooting stars
+let fireworks = [];          // Starlight firework particles
+let releaseParticles = [];   // Letter release sparkles
+let pondRipples = [];        // Water ripples inside pond
+let waterDroplets = [];      // Water splash droplets
+let fireflies = [];          // Ambient meadow fireflies
+let grassTufts = [];         // Meadow grass blades
+let bgStars = [];            // Background starfield
+
+// Personal persisted data (via notebookAppApi)
+let personalState = {
+  hasSeenGuide: false,
+  accessory: `none`,
+  volumes: { bgm: 55, sfx: 70, water: 65 },
+  keptLetters: [],       // Self-written kept letters
+  collectedLetters: [],  // User letters collected from meadow/pond
+  paperBoats: []         // Nature letters kept -> paper boats on pond
+};
+
+// Active UI / Modal contexts
+let activeWriteStar = null;
+let activeReadContext = null;
+let selectedPeerId = null;
+let pendingIncomingChatPeerId = null;
+let activeChatPeerId = null;
+let isDraggingSky = false;
+let dragStartPt = null;
+let mousePos = { x: -999, y: -999, active: false };
+let lastFrameTime = performance.now();
+let stepSoundCooldown = 0;
+let lastStateEmitTime = 0;
+
+// =========================================================================
+// 2. PERSISTENCE VIA NOTEBOOK APP API (No localStorage/sessionStorage)
+// =========================================================================
+async function loadPersistedState() {
+  try {
+    if (window.notebookAppApi && typeof window.notebookAppApi.getAppState === `function`) {
+      const saved = await window.notebookAppApi.getAppState();
+      if (saved && typeof saved === `object`) {
+        if (typeof saved.hasSeenGuide === `boolean`) personalState.hasSeenGuide = saved.hasSeenGuide;
+        if (typeof saved.accessory === `string`) personalState.accessory = saved.accessory;
+        if (saved.volumes && typeof saved.volumes === `object`) {
+          personalState.volumes = {
+            bgm: Number.isFinite(saved.volumes.bgm) ? saved.volumes.bgm : 55,
+            sfx: Number.isFinite(saved.volumes.sfx) ? saved.volumes.sfx : 70,
+            water: Number.isFinite(saved.volumes.water) ? saved.volumes.water : 65
+          };
+        }
+        if (Array.isArray(saved.keptLetters)) personalState.keptLetters = saved.keptLetters;
+        if (Array.isArray(saved.collectedLetters)) personalState.collectedLetters = saved.collectedLetters;
+        if (Array.isArray(saved.paperBoats)) personalState.paperBoats = saved.paperBoats;
+        if (Array.isArray(saved.sharedMailbox)) sharedMailbox = saved.sharedMailbox;
+      }
+    }
+  } catch (e) {
+    // Graceful fallback if running outside sandbox
+  }
+  player.accessory = personalState.accessory || `none`;
+  applyVolumeInputs();
+  updateDressUI();
+}
+
+async function savePersistedState() {
+  try {
+    if (window.notebookAppApi && typeof window.notebookAppApi.setAppState === `function`) {
+      await window.notebookAppApi.setAppState({
+        hasSeenGuide: personalState.hasSeenGuide,
+        accessory: personalState.accessory,
+        volumes: personalState.volumes,
+        keptLetters: personalState.keptLetters.slice(-40),
+        collectedLetters: personalState.collectedLetters.slice(-40),
+        paperBoats: personalState.paperBoats.slice(-24),
+        sharedMailbox: sharedMailbox.slice(-30)
+      });
+    }
+  } catch (e) {
+    // Ignore storage rejection outside host
+  }
+}
+
+// =========================================================================
+// 3. SYNTHESIZED WEB AUDIO ENGINE (No external audio files)
+// =========================================================================
+const SoundEngine = {
+  ctx: null,
+  bgmGain: null,
+  sfxGain: null,
+  waterGain: null,
+  started: false,
+  noiseBuffer: null,
+
+  init() {
+    if (this.ctx) {
+      if (this.ctx.state === `suspended`) this.ctx.resume().catch(() => {});
+      return;
+    }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    this.ctx = new AC();
+
+    this.bgmGain = this.ctx.createGain();
+    this.sfxGain = this.ctx.createGain();
+    this.waterGain = this.ctx.createGain();
+
+    this.bgmGain.connect(this.ctx.destination);
+    this.sfxGain.connect(this.ctx.destination);
+    this.waterGain.connect(this.ctx.destination);
+    this.applyGains();
+
+    // Create reusable pink/white noise buffer for wind, crickets, water, pops
+    const sr = this.ctx.sampleRate;
+    const buf = this.ctx.createBuffer(1, sr * 2, sr);
+    const data = buf.getChannelData(0);
+    let b0 = 0, b1 = 0, b2 = 0;
+    for (let i = 0; i < data.length; i++) {
+      const white = Math.random() * 2 - 1;
+      b0 = 0.997 * b0 + white * 0.029;
+      b1 = 0.985 * b1 + white * 0.032;
+      b2 = 0.950 * b2 + white * 0.048;
+      data[i] = (b0 + b1 + b2 + white * 0.08) * 0.35;
+    }
+    this.noiseBuffer = buf;
+
+    if (!this.started) {
+      this.started = true;
+      this.startAmbientLoop();
+    }
+  },
+
+  applyGains() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    this.bgmGain.gain.setTargetAtTime((personalState.volumes.bgm / 100) * 0.42, t, 0.08);
+    this.sfxGain.gain.setTargetAtTime((personalState.volumes.sfx / 100) * 0.55, t, 0.05);
+    this.waterGain.gain.setTargetAtTime((personalState.volumes.water / 100) * 0.65, t, 0.05);
+  },
+
+  startAmbientLoop() {
+    if (!this.ctx) return;
+    // Soft night breeze + gentle pond murmur
+    const windSrc = this.ctx.createBufferSource();
+    windSrc.buffer = this.noiseBuffer;
+    windSrc.loop = true;
+    const windFilter = this.ctx.createBiquadFilter();
+    windFilter.type = `bandpass`;
+    windFilter.frequency.value = 340;
+    windFilter.Q.value = 1.4;
+    const windAmp = this.ctx.createGain();
+    windAmp.gain.value = 0.08;
+    windSrc.connect(windFilter);
+    windFilter.connect(windAmp);
+    windAmp.connect(this.bgmGain);
+    windSrc.start();
+
+    // Gentle Satie-like piano meditation + occasional cricket chirps
+    const pianoChords = [
+      [293.66, 369.99, 440.00, 554.37], // Dmaj7
+      [246.94, 293.66, 369.99, 440.00], // Bm7
+      [196.00, 246.94, 293.66, 369.99], // Gmaj7
+      [220.00, 277.18, 329.63, 440.00]  // A
+    ];
+    let chordIdx = 0;
+
+    setInterval(() => {
+      if (!this.ctx || this.ctx.state !== `running`) return;
+      const chord = pianoChords[chordIdx % pianoChords.length];
+      chordIdx++;
+      chord.forEach((freq, idx) => {
+        setTimeout(() => this.playSoftPianoTone(freq, 3.2, 0.11, this.bgmGain), idx * 420);
+      });
+    }, 5200);
+
+    setInterval(() => {
+      if (!this.ctx || this.ctx.state !== `running`) return;
+      if (Math.random() < 0.6) this.playCricketChirp();
+    }, 3400);
+  },
+
+  playSoftPianoTone(freq, dur, vol, dest) {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    const gain = this.ctx.createGain();
+    osc.type = `sine`;
+    osc2.type = `triangle`;
+    osc.frequency.setValueAtTime(freq, t);
+    osc2.frequency.setValueAtTime(freq * 2, t);
+
+    const sub = this.ctx.createGain();
+    sub.gain.value = 0.14;
+    osc2.connect(sub);
+
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(vol, t + 0.04);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+
+    osc.connect(gain);
+    sub.connect(gain);
+    gain.connect(dest || this.sfxGain);
+    osc.start(t);
+    osc2.start(t);
+    osc.stop(t + dur + 0.05);
+    osc2.stop(t + dur + 0.05);
+  },
+
+  playCricketChirp() {
+    if (!this.ctx) return;
+    const t = this.ctx.currentTime;
+    const osc = this.ctx.createOscillator();
+    const g = this.ctx.createGain();
+    osc.type = `sine`;
+    osc.frequency.setValueAtTime(4150 + Math.random() * 240, t);
+    g.gain.setValueAtTime(0.0001, t);
+    for (let k = 0; k < 3; k++) {
+      const s = t + k * 0.055;
+      g.gain.exponentialRampToValueAtTime(0.025, s + 0.012);
+      g.gain.exponentialRampToValueAtTime(0.0001, s + 0.042);
+    }
+    osc.connect(g);
+    g.connect(this.bgmGain);
+    osc.start(t);
+    osc.stop(t + 0.25);
+  },
+
+  playViolinNote(stepIdx) {
+    this.init();
+    if (!this.ctx) return;
+    const scale = [293.66, 440.00, 369.99, 554.37, 659.25, 493.88, 587.33, 739.99];
+    const freq = scale[stepIdx % scale.length];
+    const t = this.ctx.currentTime;
+
+    const osc = this.ctx.createOscillator();
+    const osc2 = this.ctx.createOscillator();
+    osc.type = `sawtooth`;
+    osc2.type = `triangle`;
+    osc.frequency.setValueAtTime(freq, t);
+    osc2.frequency.setValueAtTime(freq * 1.003, t);
+
+    // Gentle vibrato
+    const lfo = this.ctx.createOscillator();
+    const lfoGain = this.ctx.createGain();
+    lfo.frequency.value = 5.2;
+    lfoGain.gain.value = 2.6;
+    lfo.connect(lfoGain);
+    lfoGain.connect(osc.frequency);
+    lfo.connect(osc2.frequency);
+
+    const bodyFilter = this.ctx.createBiquadFilter();
+    bodyFilter.type = `bandpass`;
+    bodyFilter.frequency.setValueAtTime(freq * 2.1, t);
+    bodyFilter.Q.value = 1.6;
+
+    const gain = this.ctx.createGain();
+    gain.gain.setValueAtTime(0.0001, t);
+    gain.gain.exponentialRampToValueAtTime(0.14, t + 0.45);
+    gain.gain.exponentialRampToValueAtTime(0.09, t + 1.4);
+    gain.gain.exponentialRampToValueAtTime(0.0001, t + 2.8);
+
+    osc.connect(bodyFilter);
+    osc2.connect(bodyFilter);
+    bodyFilter.connect(gain);
+    gain.connect(this.sfxGain);
+
+    lfo.start(t);
+    osc.start(t);
+    osc2.start(t);
+    lfo.stop(t + 2.9);
+    osc.stop(t + 2.9);
+    osc2.stop(t + 2.9);
+  },
+
+  playWaterStep() {
+    this.init();
+    if (!this.ctx || !this.noiseBuffer) return;
+    const t = this.ctx.currentTime;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noiseBuffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = `bandpass`;
+    filter.frequency.setValueAtTime(950 + Math.random() * 350, t);
+    filter.Q.value = 2.2;
+
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(0.16, t + 0.015);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+
+    src.connect(filter);
+    filter.connect(g);
+    g.connect(this.waterGain);
+    src.start(t, Math.random() * 0.5, 0.2);
+
+    // Subtle droplet plink
+    const drop = this.ctx.createOscillator();
+    const dg = this.ctx.createGain();
+    drop.type = `sine`;
+    drop.frequency.setValueAtTime(520 + Math.random() * 180, t);
+    drop.frequency.exponentialRampToValueAtTime(860, t + 0.07);
+    dg.gain.setValueAtTime(0.05, t);
+    dg.gain.exponentialRampToValueAtTime(0.0001, t + 0.09);
+    drop.connect(dg);
+    dg.connect(this.waterGain);
+    drop.start(t);
+    drop.stop(t + 0.1);
+  },
+
+  playWaterSplash(isLanding) {
+    this.init();
+    if (!this.ctx || !this.noiseBuffer) return;
+    const t = this.ctx.currentTime;
+    const src = this.ctx.createBufferSource();
+    src.buffer = this.noiseBuffer;
+
+    const filter = this.ctx.createBiquadFilter();
+    filter.type = `bandpass`;
+    filter.frequency.setValueAtTime(isLanding ? 780 : 1120, t);
+    filter.Q.value = 1.4;
+
+    const g = this.ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(isLanding ? 0.34 : 0.22, t + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + (isLanding ? 0.36 : 0.22));
+
+    src.connect(filter);
+    filter.connect(g);
+    g.connect(this.waterGain);
+    src.start(t, Math.random() * 0.4, 0.4);
+
+    const count = isLanding ? 3 : 2;
+    for (let i = 0; i < count; i++) {
+      const delay = i * 0.045;
+      const drop = this.ctx.createOscillator();
+      const dg = this.ctx.createGain();
+      drop.type = `sine`;
+      const baseF = 580 + Math.random() * 440;
+      drop.frequency.setValueAtTime(baseF, t + delay);
+      drop.frequency.exponentialRampToValueAtTime(baseF * 1.45, t + delay + 0.09);
+      dg.gain.setValueAtTime(0.0001, t + delay);
+      dg.gain.exponentialRampToValueAtTime(0.08, t + delay + 0.01);
+      dg.gain.exponentialRampToValueAtTime(0.0001, t + delay + 0.12);
+      drop.connect(dg);
+      dg.connect(this.waterGain);
+      drop.start(t + delay);
+      drop.stop(t + delay + 0.14);
+    }
+  },
+
+  playPianoChime() {
+    this.init();
+    [523.25, 659.25, 783.99].forEach((f, idx) => {
+      setTimeout(() => this.playSoftPianoTone(f, 1.8, 0.16, this.sfxGain), idx * 120);
+    });
+  },
+
+  playXylophoneRelease() {
+    this.init();
+    if (!this.ctx) return;
+    [880, 1046.5, 1318.5, 1567.98].forEach((f, idx) => {
+      const delay = idx * 0.09;
+      const t = this.ctx.currentTime + delay;
+      const osc = this.ctx.createOscillator();
+      const g = this.ctx.createGain();
+      osc.type = `sine`;
+      osc.frequency.setValueAtTime(f, t);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.14, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+      osc.connect(g);
+      g.connect(this.sfxGain);
+      osc.start(t);
+      osc.stop(t + 0.7);
+    });
+  },
+
+  playMeteorMusic() {
+    this.init();
+    [587.33, 659.25, 739.99, 880, 1108.73].forEach((f, idx) => {
+      setTimeout(() => this.playSoftPianoTone(f, 2.5, 0.14, this.sfxGain), idx * 240);
+    });
+  },
+
+  playFireworkAudio() {
+    this.init();
+    if (!this.ctx || !this.noiseBuffer) return;
+    [440, 554.37, 659.25, 880].forEach((f, idx) => {
+      setTimeout(() => this.playSoftPianoTone(f, 2.4, 0.13, this.sfxGain), idx * 180);
+    });
+    for (let i = 0; i < 4; i++) {
+      setTimeout(() => {
+        if (!this.ctx) return;
+        const t = this.ctx.currentTime;
+        const src = this.ctx.createBufferSource();
+        src.buffer = this.noiseBuffer;
+        const flt = this.ctx.createBiquadFilter();
+        flt.type = `lowpass`;
+        flt.frequency.setValueAtTime(620, t);
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(0.24, t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
+        src.connect(flt);
+        flt.connect(g);
+        g.connect(this.sfxGain);
+        src.start(t, 0, 0.55);
+      }, i * 380);
+    }
+  }
+};
+
+// =========================================================================
+// 4. REAL-TIME MULTIPLAYER (Socket.IO v4 WebSocket + BroadcastChannel)
+// =========================================================================
+class SocketIOv4Bridge {
+  constructor(host) {
+    this.host = host;
+    this.ws = null;
+    this.id = null;
+    this.connected = false;
+    this.handlers = {};
+    this.retryDelay = 1800;
+    this.reconnectTimer = null;
+  }
+
+  on(event, fn) {
+    if (!this.handlers[event]) this.handlers[event] = [];
+    this.handlers[event].push(fn);
+  }
+
+  triggerLocal(event, payload) {
+    const list = this.handlers[event];
+    if (!list) return;
+    list.forEach(fn => {
+      try { fn(payload); } catch (e) {}
+    });
+  }
+
+  connect() {
+    if (this.ws && (this.ws.readyState === WebSocket.OPEN || this.ws.readyState === WebSocket.CONNECTING)) return;
+    try {
+      const wsUrl = `wss://` + this.host + `/socket.io/?EIO=4&transport=websocket`;
+      this.ws = new WebSocket(wsUrl);
+      this.ws.onopen = () => {};
+      this.ws.onmessage = (evt) => this.handleFrame(evt.data);
+      this.ws.onclose = () => {
+        this.connected = false;
+        this.triggerLocal(`disconnect`);
+        this.scheduleReconnect();
+      };
+      this.ws.onerror = () => {
+        this.connected = false;
+      };
+    } catch (e) {
+      this.scheduleReconnect();
+    }
+  }
+
+  scheduleReconnect() {
+    if (this.reconnectTimer) return;
+    this.reconnectTimer = setTimeout(() => {
+      this.reconnectTimer = null;
+      this.connect();
+    }, this.retryDelay);
+  }
+
+  handleFrame(raw) {
+    if (typeof raw !== `string` || !raw.length) return;
+    // Engine.IO ping
+    if (raw === `2`) {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.send(`3`);
+      return;
+    }
+    // Engine.IO open handshake -> reply Socket.IO connect "40"
+    if (raw.startsWith(`0`)) {
+      if (this.ws && this.ws.readyState === WebSocket.OPEN) this.ws.send(`40`);
+      return;
+    }
+    // Socket.IO connect ack: 40{"sid":"..."}
+    if (raw.startsWith(`40`)) {
+      try {
+        const meta = JSON.parse(raw.slice(2) || `{}`);
+        if (meta && meta.sid) this.id = meta.sid;
+      } catch (e) {}
+      this.connected = true;
+      this.triggerLocal(`connect`);
+      return;
+    }
+    // Socket.IO event packet: 42["eventName", payload]
+    if (raw.startsWith(`42`)) {
+      try {
+        const parsed = JSON.parse(raw.slice(2));
+        if (Array.isArray(parsed) && parsed.length >= 1) {
+          this.triggerLocal(parsed[0], parsed[1]);
+        }
+      } catch (e) {}
+    }
+  }
+
+  emit(event, payload) {
+    if (!this.ws || this.ws.readyState !== WebSocket.OPEN || !this.connected) return false;
+    try {
+      this.ws.send(`42` + JSON.stringify([event, payload]));
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+}
+
+const socket = new SocketIOv4Bridge(BACKEND_URL);
+let bc = null;
+try {
+  if (typeof BroadcastChannel === `function`) {
+    bc = new BroadcastChannel(`dear_my_cosmos`);
+  }
+} catch (e) {}
+
+function getMyPeerId() {
+  return socket.id || player.id;
+}
+
+function broadcastChannelEmit(event, payload) {
+  if (!bc) return;
+  try {
+    bc.postMessage({
+      senderId: getMyPeerId(),
+      planetId: currentPlanetId,
+      event,
+      payload
+    });
+  } catch (e) {}
+}
+
+function initMultiplayer() {
+  socket.on(`connect`, () => {
+    const label = document.getElementById(`net-status-label`);
+    if (label) label.textContent = `실시간 서버 연결됨`;
+    if (currentPlanetId) {
+      socket.emit(`joinPlanet`, {
+        planetId: currentPlanetId,
+        xNorm: player.x,
+        yNorm: player.y,
+        accessory: player.accessory,
+        cloak: player.cloak
+      });
+    }
+  });
+
+  socket.on(`disconnect`, () => {
+    const label = document.getElementById(`net-status-label`);
+    if (label) label.textContent = `동시 창·로컬 동기화 활성 (재연결 대기)`;
+  });
+
+  socket.on(`planetCounts`, (counts) => {
+    if (counts && typeof counts === `object`) {
+      PLANETS.forEach(p => {
+        if (typeof counts[p.id] === `number`) {
+          planetCounts[p.id] = counts[p.id];
+        }
+      });
+      renderPlanetMapNodes();
+      renderAdminPlanetList();
+      updatePlanetStatusHud();
+    }
+  });
+
+  socket.on(`peerJoined`, (data) => {
+    handlePeerState(data, true);
+  });
+
+  socket.on(`peerUpdated`, (data) => {
+    handlePeerState(data, false);
+  });
+
+  socket.on(`peerLeft`, (data) => {
+    const id = data && (data.id || data.peerId || data.socketId);
+    if (id) removeRemotePeer(id);
+  });
+
+  socket.on(`adminAction`, (data) => {
+    handleAdminAction(data);
+  });
+
+  if (bc) {
+    bc.onmessage = (evt) => {
+      const msg = evt.data;
+      if (!msg || msg.senderId === getMyPeerId()) return;
+      if (msg.event === `whoIsHere`) {
+        if (currentPlanetId) {
+          broadcastChannelEmit(`presenceReply`, buildPresencePayload());
+        }
+        return;
+      }
+      if (msg.event === `presenceReply` || msg.event === `joinPlanet` || msg.event === `updateState`) {
+        if (msg.payload && msg.payload.planetId === currentPlanetId) {
+          handlePeerState({ ...msg.payload, id: msg.senderId }, msg.event === `joinPlanet`);
+        } else if (msg.payload && msg.payload.planetId !== currentPlanetId && remoteTabs[msg.senderId]) {
+          removeRemotePeer(msg.senderId);
+        }
+        recalcLocalTabCounts();
+        return;
+      }
+      if (msg.event === `leavePlanet`) {
+        removeRemotePeer(msg.senderId);
+        recalcLocalTabCounts();
+        return;
+      }
+      if (msg.event === `adminAction`) {
+        handleAdminAction(msg.payload);
+      }
+    };
+  }
+
+  socket.connect();
+  setTimeout(() => {
+    const label = document.getElementById(`net-status-label`);
+    if (label && !socket.connected) {
+      label.textContent = `동시 창 동기화 활성 · 서버 연결 시도 중`;
+    }
+  }, 1500);
+}
+
+function buildPresencePayload() {
+  return {
+    id: getMyPeerId(),
+    planetId: currentPlanetId,
+    xNorm: player.x,
+    yNorm: player.y,
+    facing: player.facing,
+    isMoving: player.isMoving,
+    isJumping: player.isJumping,
+    jumpOffset: player.jumpOffset,
+    accessory: player.accessory,
+    cloak: player.cloak,
+    cloakWetness: player.cloakWetness,
+    inPond: player.inPond
+  };
+}
+
+function emitPlayerState(force) {
+  if (!currentPlanetId) return;
+  const now = performance.now();
+  if (!force && now - lastStateEmitTime < 45) return;
+  lastStateEmitTime = now;
+
+  const payload = {
+    planetId: currentPlanetId,
+    xNorm: player.x,
+    yNorm: player.y,
+    facing: player.facing,
+    isMoving: player.isMoving,
+    isJumping: player.isJumping,
+    jumpOffset: player.jumpOffset,
+    accessory: player.accessory,
+    cloak: player.cloak,
+    cloakWetness: player.cloakWetness,
+    inPond: player.inPond
+  };
+  socket.emit(`updateState`, payload);
+  broadcastChannelEmit(`updateState`, payload);
+}
+
+function handlePeerState(data, isNewJoin) {
+  if (!data) return;
+  const pid = data.id || data.peerId || data.socketId;
+  if (!pid || pid === getMyPeerId()) return;
+  if (data.planetId && data.planetId !== currentPlanetId) return;
+
+  const existing = remoteTabs[pid];
+  if (!existing) {
+    remoteTabs[pid] = {
+      id: pid,
+      x: typeof data.xNorm === `number` ? data.xNorm : 0.5,
+      y: typeof data.yNorm === `number` ? data.yNorm : 0.78,
+      targetX: typeof data.xNorm === `number` ? data.xNorm : 0.5,
+      targetY: typeof data.yNorm === `number` ? data.yNorm : 0.78,
+      facing: data.facing || 1,
+      isMoving: Boolean(data.isMoving),
+      isJumping: Boolean(data.isJumping),
+      jumpOffset: data.jumpOffset || 0,
+      walkPhase: 0,
+      accessory: data.accessory || `none`,
+      cloak: Boolean(data.cloak),
+      cloakWetness: data.cloakWetness || 0,
+      cloakWave: 0,
+      inPond: Boolean(data.inPond),
+      speechText: ``,
+      speechUntil: 0,
+      lastSeen: Date.now()
+    };
+  } else {
+    existing.targetX = typeof data.xNorm === `number` ? data.xNorm : existing.targetX;
+    existing.targetY = typeof data.yNorm === `number` ? data.yNorm : existing.targetY;
+    if (typeof data.facing === `number`) existing.facing = data.facing;
+    existing.isMoving = Boolean(data.isMoving);
+    existing.isJumping = Boolean(data.isJumping);
+    if (typeof data.jumpOffset === `number`) existing.jumpOffset = data.jumpOffset;
+    if (typeof data.accessory === `string`) existing.accessory = data.accessory;
+    if (typeof data.cloak === `boolean`) existing.cloak = data.cloak;
+    if (typeof data.cloakWetness === `number`) existing.cloakWetness = data.cloakWetness;
+    existing.inPond = Boolean(data.inPond);
+    existing.lastSeen = Date.now();
+  }
+
+  if (isNewJoin && currentPlanetId) {
+    // Sync current shared environment & trajectories to newly arrived peer
+    broadcastAction({
+      type: `stateSnapshot`,
+      planetId: currentPlanetId,
+      targetPeer: pid,
+      skyName: skyState.targetName,
+      auroraActive: skyState.auroraActive,
+      trajectories: trajectories.map(tr => ({ ...tr })),
+      fallenLetters: fallenLetters.map(fl => ({ ...fl }))
+    });
+  }
+  updatePlanetStatusHud();
+}
+
+function removeRemotePeer(pid) {
+  if (!remoteTabs[pid]) return;
+  delete remoteTabs[pid];
+  if (activeChatPeerId === pid) {
+    endPrivateChat(false, `상대방이 떠나 대화가 종료되었습니다.`);
+  }
+  if (selectedPeerId === pid) closePeerPopover();
+  updatePlanetStatusHud();
+}
+
+function recalcLocalTabCounts() {
+  if (!socket.connected && currentPlanetId) {
+    planetCounts[currentPlanetId] = Math.min(MAX_PER_PLANET, 1 + Object.keys(remoteTabs).length);
+    updatePlanetStatusHud();
+    renderPlanetMapNodes();
+    renderAdminPlanetList();
+  }
+}
+
+function broadcastAction(payload) {
+  socket.emit(`adminAction`, payload);
+  broadcastChannelEmit(`adminAction`, payload);
+}
+
+function handleAdminAction(data) {
+  if (!data || !data.type) return;
+  if (data.planetId && currentPlanetId && data.planetId !== currentPlanetId) return;
+
+  switch (data.type) {
+    case `peerChat`: {
+      const text = String(data.text || ``).slice(0, 80);
+      if (!text) return;
+      const sid = data.senderId;
+      if (sid === getMyPeerId()) {
+        player.speechText = text;
+        player.speechUntil = performance.now() + 5000;
+      } else if (sid && remoteTabs[sid]) {
+        remoteTabs[sid].speechText = text;
+        remoteTabs[sid].speechUntil = performance.now() + 5000;
+      }
+      break;
+    }
+    case `skyColor`: {
+      if (data.skyName && SKY_PALETTES[data.skyName]) {
+        setSkyPalette(data.skyName);
+      }
+      break;
+    }
+    case `aurora`: {
+      skyState.auroraActive = typeof data.active === `boolean` ? data.active : !skyState.auroraActive;
+      break;
+    }
+    case `meteors`: {
+      spawnMeteorShower(data.meteors);
+      break;
+    }
+    case `fireworks`: {
+      spawnStarlightFireworks(data.bursts);
+      break;
+    }
+    case `dropLetter`: {
+      if (data.fallen) {
+        addFallenLetterIfMissing(data.fallen);
+      }
+      break;
+    }
+    case `collectFallen`: {
+      fallenLetters = fallenLetters.filter(f => f.uid !== data.uid);
+      break;
+    }
+    case `pondRipple`: {
+      if (data.senderId !== getMyPeerId()) {
+        pondRipples.push({ xNorm: data.xNorm, yNorm: data.yNorm, radius: 3, maxR: data.maxR || 26, alpha: 0.7 });
+        if (data.isSplash) {
+          SoundEngine.playWaterSplash(Boolean(data.isLanding));
+          spawnWaterDroplets(data.xNorm, data.yNorm, data.isLanding ? 8 : 5);
+        } else {
+          SoundEngine.playWaterStep();
+        }
+      }
+      break;
+    }
+    case `trajectoryCreated`: {
+      if (data.trajectories && Array.isArray(data.trajectories)) {
+        data.trajectories.forEach(tr => {
+          if (trajectories.length < MAX_TRAJECTORIES && !trajectories.some(t => t.id === tr.id)) {
+            trajectories.push(tr);
+          }
+        });
+      }
+      break;
+    }
+    case `starSent`: {
+      const tr = trajectories.find(t => t.id === data.trajId);
+      if (tr) {
+        const st = tr.stars.find(s => s.id === data.starId);
+        if (st && st.status === `empty`) {
+          st.status = `countdown`;
+          st.sentAt = data.sentAt;
+          st.authorId = data.authorId;
+          st.previewText = data.previewText || `전하지 못한 마음`;
+          if (data.letterForMailbox) {
+            sharedMailbox.push(data.letterForMailbox);
+            savePersistedState();
+          }
+        }
+      }
+      break;
+    }
+    case `chatRequest`: {
+      if (data.targetId === getMyPeerId()) {
+        pendingIncomingChatPeerId = data.senderId;
+        const toast = document.getElementById(`chat-request-toast`);
+        if (toast) toast.classList.add(`is-open`);
+      }
+      break;
+    }
+    case `chatAccept`: {
+      if (data.targetId === getMyPeerId()) {
+        openPrivateChatWith(data.senderId);
+      }
+      break;
+    }
+    case `chatDecline`: {
+      if (data.targetId === getMyPeerId()) {
+        showFloatingNotice(`상대방이 지금은 혼자 풍경을 감상하고 싶어 합니다.`);
+      }
+      break;
+    }
+    case `chatMessage`: {
+      if (data.targetId === getMyPeerId() && activeChatPeerId === data.senderId) {
+        appendChatBubble(data.text, `is-peer`);
+      }
+      break;
+    }
+    case `chatEnd`: {
+      if (data.targetId === getMyPeerId() && activeChatPeerId === data.senderId) {
+        endPrivateChat(false, `대화가 종료되었습니다.`);
+      }
+      break;
+    }
+    case `stateSnapshot`: {
+      if (data.targetPeer === getMyPeerId()) {
+        if (data.skyName && SKY_PALETTES[data.skyName]) setSkyPalette(data.skyName);
+        if (typeof data.auroraActive === `boolean`) skyState.auroraActive = data.auroraActive;
+        if (Array.isArray(data.trajectories) && trajectories.length === 0) {
+          trajectories = data.trajectories.slice(0, MAX_TRAJECTORIES);
+        }
+        if (Array.isArray(data.fallenLetters)) {
+          data.fallenLetters.forEach(addFallenLetterIfMissing);
+        }
+      }
+      break;
+    }
+  }
+}
+
+// =========================================================================
+// 5. PLANET SELECTION, GUIDE & ADMIN SECRET ENTRY
+// =========================================================================
+function dismissGuideModal() {
+  SoundEngine.init();
+  personalState.hasSeenGuide = true;
+  savePersistedState();
+  closeModal(`guide-modal`);
+  openPlanetMapModal();
+}
+
+function openPlanetMapModal() {
+  renderPlanetMapNodes();
+  openModal(`planet-map-modal`);
+  drawPlanetMapBackground();
+}
+
+function retryPlanetSync() {
+  SoundEngine.init();
+  socket.connect();
+  broadcastChannelEmit(`whoIsHere`, {});
+}
+
+function renderPlanetMapNodes() {
+  const layer = document.getElementById(`planet-nodes-layer`);
+  if (!layer) return;
+  layer.innerHTML = ``;
+  PLANETS.forEach((p, idx) => {
+    const count = Math.max(0, Math.min(MAX_PER_PLANET, planetCounts[p.id] || 0));
+    const isFull = count >= MAX_PER_PLANET;
+    const btn = document.createElement(`button`);
+    btn.type = `button`;
+    btn.className = `planet-node`;
+    btn.style.left = p.xPct + `%`;
+    btn.style.top = p.yPct + `%`;
+    btn.style.animationDelay = (-idx * 1.1) + `s`;
+    btn.style.animationDuration = (8 + (idx % 4) * 1.5) + `s`;
+    btn.disabled = isFull;
+    btn.setAttribute(`data-idx`, String(idx));
+    btn.onclick = function () { enterPlanet(p.id); };
+
+    const orb = document.createElement(`div`);
+    orb.className = `planet-orb`;
+    orb.style.width = p.size + `px`;
+    orb.style.height = p.size + `px`;
+    orb.style.background = `radial-gradient(circle at 32% 30%, ${p.c1}, ${p.c2})`;
+    orb.style.boxShadow = `0 0 18px ${p.c1}55`;
+    if (p.ring) {
+      const ring = document.createElement(`span`);
+      ring.className = `planet-orb-ring`;
+      orb.appendChild(ring);
+    }
+
+    const meta = document.createElement(`span`);
+    meta.className = `planet-meta` + (isFull ? ` is-full` : ``);
+    meta.textContent = `${p.name} (${count}/${MAX_PER_PLANET}명)`;
+
+    btn.appendChild(orb);
+    btn.appendChild(meta);
+    layer.appendChild(btn);
+  });
+}
+
+function drawPlanetMapBackground() {
+  const bg = document.getElementById(`planet-map-bg`);
+  if (!bg) return;
+  bg.width = bg.offsetWidth || 800;
+  bg.height = bg.offsetHeight || 400;
+  const g = bg.getContext(`2d`);
+  g.clearRect(0, 0, bg.width, bg.height);
+  for (let i = 0; i < 120; i++) {
+    const x = Math.random() * bg.width;
+    const y = Math.random() * bg.height;
+    const r = Math.random() * 1.4 + 0.3;
+    g.fillStyle = `rgba(242, 236, 225, ${0.25 + Math.random() * 0.6})`;
+    g.beginPath();
+    g.arc(x, y, r, 0, Math.PI * 2);
+    g.fill();
+  }
+}
+
+function enterPlanet(planetId) {
+  if (!isAdmin && currentPlanetId) return; // Regular users can only pick once
+  const count = planetCounts[planetId] || 0;
+  if (count >= MAX_PER_PLANET) return;
+
+  SoundEngine.init();
+  if (currentPlanetId && currentPlanetId !== planetId) {
+    if (activeChatPeerId) endPrivateChat(true);
+    broadcastChannelEmit(`leavePlanet`, { planetId: currentPlanetId });
+    Object.keys(remoteTabs).forEach(k => delete remoteTabs[k]);
+    trajectories = [];
+    fallenLetters = [];
+    soaringStars = [];
+  }
+
+  currentPlanetId = planetId;
+  player.x = 0.25 + Math.random() * 0.5;
+  player.y = 0.78;
+  player.targetX = null;
+  player.targetY = null;
+
+  socket.emit(`joinPlanet`, {
+    planetId,
+    xNorm: player.x,
+    yNorm: player.y,
+    accessory: player.accessory,
+    cloak: player.cloak
+  });
+  broadcastChannelEmit(`joinPlanet`, buildPresencePayload());
+  broadcastChannelEmit(`whoIsHere`, {});
+
+  if (!socket.connected) {
+    planetCounts[planetId] = 1 + Object.keys(remoteTabs).length;
+  }
+
+  closeModal(`planet-map-modal`);
+  updatePlanetStatusHud();
+}
+
+function updatePlanetStatusHud() {
+  const el = document.getElementById(`hud-planet-status`);
+  if (!el) return;
+  if (!currentPlanetId) {
+    el.textContent = `우주 지도 대기 중`;
+    return;
+  }
+  const pObj = PLANETS.find(p => p.id === currentPlanetId);
+  const name = pObj ? pObj.name : currentPlanetId;
+  const count = socket.connected
+    ? Math.max(1, planetCounts[currentPlanetId] || 1)
+    : Math.min(MAX_PER_PLANET, 1 + Object.keys(remoteTabs).length);
+  el.textContent = `${name} (접속자: ${count}/${MAX_PER_PLANET}명)`;
+}
+
+function handleTitleSecretClick() {
+  clearTimeout(titleClickTimer);
+  titleClickCount++;
+  titleClickTimer = setTimeout(() => { titleClickCount = 0; }, 2200);
+  if (titleClickCount >= 10) {
+    titleClickCount = 0;
+    activateAdminMode();
+  }
+}
+
+function activateAdminMode() {
+  isAdmin = true;
+  player.cloak = true;
+  const btn = document.getElementById(`btn-admin`);
+  if (btn) btn.style.display = `inline-flex`;
+  emitPlayerState(true);
+  openAdminModal();
+}
+
+function openAdminModal() {
+  if (!isAdmin) return;
+  renderAdminPlanetList();
+  openModal(`admin-modal`);
+}
+
+function renderAdminPlanetList() {
+  const list = document.getElementById(`admin-planet-list`);
+  if (!list) return;
+  list.innerHTML = ``;
+  PLANETS.forEach(p => {
+    const count = planetCounts[p.id] || 0;
+    const isCurrent = p.id === currentPlanetId;
+    const isFull = count >= MAX_PER_PLANET && !isCurrent;
+    const b = document.createElement(`button`);
+    b.type = `button`;
+    b.className = `btn btn-sm` + (isCurrent ? ` btn-primary` : ``);
+    b.disabled = isFull || isCurrent;
+    b.textContent = `${p.name} (${count}/${MAX_PER_PLANET}명)`;
+    b.onclick = function () {
+      enterPlanet(p.id);
+      closeModal(`admin-modal`);
+    };
+    list.appendChild(b);
+  });
+}
+
+// =========================================================================
+// 6. WORLD GEOMETRY (Gentle Meadow Hill + Organic Oval Pond)
+// =========================================================================
+function getGroundY(xPx, w, h) {
+  const nx = xPx / Math.max(1, w);
+  const base = h * 0.67;
+  const gentleCurve = Math.sin(nx * Math.PI) * (h * 0.028) + Math.cos(nx * Math.PI * 2.1) * (h * 0.01);
+  return base - gentleCurve;
+}
+
+function getPondBounds(w, h) {
+  const cx = w * 0.5;
+  const cy = h * 0.835;
+  const rx = Math.min(w * 0.21, 230);
+  const ry = Math.min(h * 0.075, 58);
+  return { cx, cy, rx, ry };
+}
+
+function isPointInPond(xPx, yPx, w, h) {
+  const { cx, cy, rx, ry } = getPondBounds(w, h);
+  const dx = (xPx - cx) / rx;
+  const dy = (yPx - cy) / ry;
+  const ang = Math.atan2(dy, dx);
+  // Hand-drawn organic wobble matching rendered pond silhouette
+  const wobble = 1 + 0.055 * Math.sin(ang * 3 + 0.5) + 0.035 * Math.cos(ang * 5 - 0.8);
+  return (dx * dx + dy * dy) <= wobble * wobble;
+}
+
+function clampPlayerPosition(nx, ny, w, h) {
+  const xClamped = Math.max(0.03, Math.min(0.97, nx));
+  const minY = (getGroundY(xClamped * w, w, h) + 6) / h;
+  const yClamped = Math.max(minY, Math.min(0.955, ny));
+  return { x: xClamped, y: yClamped };
+}
+
+function tracePondPath(ctx, w, h, expandScale) {
+  const { cx, cy, rx, ry } = getPondBounds(w, h);
+  const scale = expandScale || 1;
+  ctx.beginPath();
+  const steps = 48;
+  for (let i = 0; i <= steps; i++) {
+    const a = (i / steps) * Math.PI * 2;
+    const wobble = 1 + 0.055 * Math.sin(a * 3 + 0.5) + 0.035 * Math.cos(a * 5 - 0.8);
+    const px = cx + Math.cos(a) * rx * wobble * scale;
+    const py = cy + Math.sin(a) * ry * wobble * scale;
+    if (i === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+}
+
+// =========================================================================
+// 7. TRAJECTORIES, STARS & LETTER SYSTEM
+// =========================================================================
+function createSkyTrajectories(startNorm, endNorm) {
+  if (!currentPlanetId || trajectories.length >= MAX_TRAJECTORIES) return;
+  const available = MAX_TRAJECTORIES - trajectories.length;
+  const desired = Math.min(available, 2 + Math.floor(Math.random() * 3)); // 2~4
+  const created = [];
+
+  for (let i = 0; i < desired; i++) {
+    const fromLeft = startNorm ? startNorm.x < 0.5 : Math.random() < 0.5;
+    const y0 = 0.09 + Math.random() * 0.42;
+    const y1 = 0.09 + Math.random() * 0.44;
+    const cy1 = endNorm ? Math.max(0.06, Math.min(0.55, endNorm.y + (Math.random() - 0.5) * 0.24)) : (0.06 + Math.random() * 0.45);
+    const cy2 = 0.06 + Math.random() * 0.46;
+
+    const p0 = fromLeft ? { x: -0.02, y: y0 } : { x: 1.02, y: y0 };
+    const p3 = fromLeft ? { x: 1.02, y: y1 } : { x: -0.02, y: y1 };
+    const p1 = { x: fromLeft ? 0.32 : 0.68, y: cy1 };
+    const p2 = { x: fromLeft ? 0.68 : 0.32, y: cy2 };
+
+    const starCount = 1 + Math.floor(Math.random() * 2); // 1~2 stars
+    const stars = [];
+    for (let s = 0; s < starCount; s++) {
+      const t = starCount === 1 ? (0.35 + Math.random() * 0.3) : (s === 0 ? 0.28 + Math.random() * 0.14 : 0.6 + Math.random() * 0.16);
+      stars.push({
+        id: `st_` + Math.random().toString(36).slice(2, 9),
+        t,
+        status: `empty`, // 'empty' | 'countdown'
+        sentAt: 0,
+        authorId: null,
+        previewText: ``,
+        letterData: null
+      });
+    }
+
+    const tr = {
+      id: `tr_` + Math.random().toString(36).slice(2, 9),
+      p0, p1, p2, p3,
+      drawProgress: 0,
+      stars
+    };
+    trajectories.push(tr);
+    created.push(tr);
+    setTimeout(() => SoundEngine.playViolinNote(i + trajectories.length), i * 240);
+  }
+
+  if (created.length) {
+    broadcastAction({
+      type: `trajectoryCreated`,
+      planetId: currentPlanetId,
+      trajectories: created
+    });
+  }
+}
+
+function evalCubicBezier(tr, t) {
+  const u = 1 - t;
+  const tt = t * t, uu = u * u;
+  const uuu = uu * u, ttt = tt * t;
+  return {
+    x: uuu * tr.p0.x + 3 * uu * t * tr.p1.x + 3 * u * tt * tr.p2.x + ttt * tr.p3.x,
+    y: uuu * tr.p0.y + 3 * uu * t * tr.p1.y + 3 * u * tt * tr.p2.y + ttt * tr.p3.y
+  };
+}
+
+function openWriteLetterModal(trajId, starId) {
+  const tr = trajectories.find(t => t.id === trajId);
+  if (!tr) return;
+  const st = tr.stars.find(s => s.id === starId);
+  if (!st) return;
+
+  if (st.status === `countdown`) {
+    // Reading an in-flight letter on the trajectory
+    const isAuthor = st.authorId === getMyPeerId();
+    openReadLetterModal({
+      source: `trajectory`,
+      blurred: !isAuthor,
+      letter: isAuthor && st.letterData ? st.letterData : {
+        to: `익명의 별에게`,
+        content: st.previewText || `아직 밤하늘을 떠나기 전의 편지입니다. 작성자만 내용을 볼 수 있습니다.`,
+        from: ``
+      }
+    });
+    return;
+  }
+
+  activeWriteStar = { trajId, starId };
+  document.getElementById(`letter-to-input`).value = ``;
+  document.getElementById(`letter-content-input`).value = ``;
+  document.getElementById(`letter-from-input`).value = ``;
+  document.getElementById(`write-error-msg`).textContent = ``;
+  openModal(`write-letter-modal`);
+}
+
+function closeWriteModal() {
+  activeWriteStar = null;
+  closeModal(`write-letter-modal`);
+}
+
+function keepWrittenLetter() {
+  const to = document.getElementById(`letter-to-input`).value.trim();
+  const content = document.getElementById(`letter-content-input`).value.trim();
+  const from = document.getElementById(`letter-from-input`).value.trim();
+  const err = document.getElementById(`write-error-msg`);
+
+  if (!to || !content) {
+    if (err) err.textContent = `받는 사람(To)과 편지 내용(Content)을 모두 입력해 주세요.`;
+    return;
+  }
+
+  personalState.keptLetters.push({
+    id: `kept_` + Date.now(),
+    to, content, from,
+    kind: `kept`,
+    createdAt: Date.now()
+  });
+  savePersistedState();
+  closeWriteModal();
+  SoundEngine.playPianoChime();
+}
+
+function sendWrittenLetter() {
+  if (!activeWriteStar) return;
+  const to = document.getElementById(`letter-to-input`).value.trim();
+  const content = document.getElementById(`letter-content-input`).value.trim();
+  const from = document.getElementById(`letter-from-input`).value.trim();
+  const err = document.getElementById(`write-error-msg`);
+
+  if (!to || !content) {
+    if (err) err.textContent = `받는 사람(To)과 편지 내용(Content)을 모두 입력해 주세요.`;
+    return;
+  }
+
+  const tr = trajectories.find(t => t.id === activeWriteStar.trajId);
+  const st = tr ? tr.stars.find(s => s.id === activeWriteStar.starId) : null;
+  if (!tr || !st) {
+    closeWriteModal();
+    return;
+  }
+
+  const isTorn = Math.random() < 0.30;
+  const tearSeed = isTorn ? {
+    corner: Math.floor(Math.random() * 4),
+    jagSeed: Math.floor(Math.random() * 9999),
+    blots: [
+      { x: 18 + Math.random() * 60, y: 20 + Math.random() * 55, r: 16 + Math.random() * 18 },
+      { x: 25 + Math.random() * 55, y: 40 + Math.random() * 45, r: 12 + Math.random() * 14 }
+    ]
+  } : null;
+
+  const letterObj = {
+    id: `usr_` + Date.now() + `_` + Math.random().toString(36).slice(2, 6),
+    to, content, from,
+    kind: `user`,
+    tearSeed,
+    sentAt: Date.now()
+  };
+
+  st.status = `countdown`;
+  st.sentAt = Date.now();
+  st.authorId = getMyPeerId();
+  st.letterData = letterObj;
+  st.previewText = `마음을 담은 별이 떠날 채비를 하고 있습니다…`;
+
+  sharedMailbox.push(letterObj);
+  savePersistedState();
+
+  broadcastAction({
+    type: `starSent`,
+    planetId: currentPlanetId,
+    trajId: tr.id,
+    starId: st.id,
+    sentAt: st.sentAt,
+    authorId: st.authorId,
+    previewText: `어느 여행자가 보낸 편지가 밤하늘을 기다리고 있습니다.`,
+    letterForMailbox: letterObj
+  });
+
+  closeWriteModal();
+  SoundEngine.playPianoChime();
+}
+
+// =========================================================================
+// 8. FALLEN LETTERS, TORN PAPER & COLLECTIONS
+// =========================================================================
+function addFallenLetterIfMissing(fallen) {
+  if (!fallen || !fallen.uid) return;
+  if (fallenLetters.some(f => f.uid === fallen.uid)) return;
+  fallenLetters.push(fallen);
+}
+
+function pickMailboxLetter() {
+  const readyUserLetters = sharedMailbox.filter(l => (Date.now() - (l.sentAt || 0)) >= COUNTDOWN_MS);
+  const chooseUser = readyUserLetters.length > 0 && Math.random() < 0.10;
+  if (chooseUser) {
+    const picked = readyUserLetters[Math.floor(Math.random() * readyUserLetters.length)];
+    return { ...picked, kind: `user` };
+  }
+  const nat = NATURE_LETTERS[Math.floor(Math.random() * NATURE_LETTERS.length)];
+  return { ...nat, kind: `nature` };
+}
+
+function createAndDropLetterStar() {
+  if (!currentPlanetId) return;
+  const letter = pickMailboxLetter();
+  const tx = 0.14 + Math.random() * 0.72;
+  const ty = 0.72 + Math.random() * 0.19;
+  const fallen = {
+    uid: `fall_` + Date.now() + `_` + Math.random().toString(36).slice(2, 6),
+    xNorm: tx,
+    yNorm: ty,
+    dropY: -0.05,
+    landed: false,
+    letter
+  };
+  addFallenLetterIfMissing(fallen);
+  broadcastAction({
+    type: `dropLetter`,
+    planetId: currentPlanetId,
+    fallen
+  });
+}
+
+function openReadLetterModal(ctx) {
+  activeReadContext = ctx;
+  const paper = document.getElementById(`read-cream-paper`);
+  const notice = document.getElementById(`read-torn-notice`);
+  const toEl = document.getElementById(`read-letter-to`);
+  const bodyEl = document.getElementById(`read-letter-body`);
+  const fromEl = document.getElementById(`read-letter-from`);
+  const blotsEl = document.getElementById(`read-ink-blots`);
+  const actionsEl = document.getElementById(`read-paper-actions`);
+
+  if (!paper || !toEl || !bodyEl || !fromEl || !actionsEl) return;
+
+  const letter = ctx.letter;
+  paper.classList.toggle(`is-blurred`, Boolean(ctx.blurred));
+  paper.style.clipPath = ``;
+  blotsEl.innerHTML = ``;
+
+  // Apply 30% Torn Paper Effect if user letter has tearSeed
+  if (!ctx.blurred && letter.tearSeed) {
+    const s = letter.tearSeed;
+    const n = (idx) => {
+      const val = Math.sin(s.jagSeed * 12.9898 + idx * 78.233) * 43758.5453;
+      return val - Math.floor(val);
+    };
+    let poly = ``;
+    if (s.corner === 0 || s.corner === 2) {
+      poly = `polygon(0% 0%, 72% 0%, ${76 + n(1)*6}% ${8 + n(2)*6}%, ${84 + n(3)*8}% ${16 + n(4)*5}%, ${80 + n(5)*5}% ${26 + n(6)*6}%, 100% ${34 + n(7)*6}%, 100% 100%, 0% 100%)`;
+    } else {
+      poly = `polygon(0% 0%, 100% 0%, 100% ${64 + n(1)*8}%, ${82 + n(2)*6}% ${72 + n(3)*6}%, ${88 + n(4)*5}% ${82 + n(5)*6}%, ${72 + n(6)*8}% 100%, 0% 100%)`;
+    }
+    paper.style.clipPath = poly;
+
+    (s.blots || []).forEach(b => {
+      const blot = document.createElement(`div`);
+      blot.className = `ink-blot`;
+      blot.style.left = b.x + `%`;
+      blot.style.top = b.y + `%`;
+      blot.style.width = b.r + `px`;
+      blot.style.height = b.r + `px`;
+      blotsEl.appendChild(blot);
+    });
+    if (notice) {
+      notice.style.display = `block`;
+      notice.textContent = `오랜 비바람을 건너며 가장자리가 조금 찢어진 편지입니다.`;
+    }
+  } else if (notice) {
+    if (ctx.blurred) {
+      notice.style.display = `block`;
+      notice.textContent = `작성자가 별똥별로 띄워 보내기 전까지는 내용을 읽을 수 없습니다.`;
+    } else {
+      notice.style.display = `none`;
+    }
+  }
+
+  toEl.textContent = `To. ${letter.to || `당신에게`}`;
+  bodyEl.textContent = letter.content || ``;
+  fromEl.textContent = letter.from ? `From. ${letter.from}` : ``;
+  fromEl.style.display = letter.from ? `block` : `none`;
+
+  actionsEl.innerHTML = ``;
+  if (ctx.source === `fallen`) {
+    const btnRelease = document.createElement(`button`);
+    btnRelease.type = `button`;
+    btnRelease.className = `paper-btn`;
+    btnRelease.textContent = `놓아주기`;
+    btnRelease.onclick = releaseActiveFallenLetter;
+
+    const btnKeep = document.createElement(`button`);
+    btnKeep.type = `button`;
+    btnKeep.className = `paper-btn paper-btn-primary`;
+    btnKeep.textContent = `보관하기`;
+    btnKeep.onclick = keepActiveFallenLetter;
+
+    actionsEl.appendChild(btnRelease);
+    actionsEl.appendChild(btnKeep);
+  } else {
+    if (ctx.source === `kept`) {
+      const btnShare = document.createElement(`button`);
+      btnShare.type = `button`;
+      btnShare.className = `paper-btn`;
+      btnShare.textContent = `공용 우체통으로 보내기`;
+      btnShare.onclick = function () {
+        sharedMailbox.push({ ...letter, sentAt: Date.now() - COUNTDOWN_MS, kind: `user` });
+        savePersistedState();
+        closeModal(`read-letter-modal`);
+        SoundEngine.playPianoChime();
+      };
+      actionsEl.appendChild(btnShare);
+    }
+    const btnClose = document.createElement(`button`);
+    btnClose.type = `button`;
+    btnClose.className = `paper-btn paper-btn-primary`;
+    btnClose.textContent = `접어 두기`;
+    btnClose.onclick = function () { closeModal(`read-letter-modal`); };
+    actionsEl.appendChild(btnClose);
+  }
+
+  openModal(`read-letter-modal`);
+}
+
+function keepActiveFallenLetter() {
+  if (!activeReadContext || activeReadContext.source !== `fallen`) return;
+  const { uid, letter, xNorm, yNorm } = activeReadContext;
+
+  if (letter.kind === `nature`) {
+    // Folds into a Paper Boat floating on the pond
+    const boatAngle = Math.random() * Math.PI * 2;
+    personalState.paperBoats.push({
+      id: `boat_` + Date.now(),
+      nx: 0.42 + Math.cos(boatAngle) * 0.08,
+      ny: 0.81 + Math.sin(boatAngle) * 0.03,
+      phase: Math.random() * Math.PI * 2,
+      letter
+    });
+  } else {
+    // Saved to Personal Constellation Archive
+    const xPct = 10 + Math.random() * 80;
+    const yPct = 14 + Math.random() * 72;
+    personalState.collectedLetters.push({
+      id: `col_` + Date.now(),
+      xPct,
+      yPct,
+      letter
+    });
+  }
+
+  fallenLetters = fallenLetters.filter(f => f.uid !== uid);
+  broadcastAction({ type: `collectFallen`, planetId: currentPlanetId, uid });
+  savePersistedState();
+  closeModal(`read-letter-modal`);
+  SoundEngine.playPianoChime();
+}
+
+function releaseActiveFallenLetter() {
+  if (!activeReadContext || activeReadContext.source !== `fallen`) return;
+  const { uid, xNorm, yNorm } = activeReadContext;
+
+  fallenLetters = fallenLetters.filter(f => f.uid !== uid);
+  broadcastAction({ type: `collectFallen`, planetId: currentPlanetId, uid });
+  closeModal(`read-letter-modal`);
+  SoundEngine.playXylophoneRelease();
+
+  // Spawn luminous release particles
+  for (let i = 0; i < 28; i++) {
+    const ang = Math.random() * Math.PI * 2;
+    const spd = 18 + Math.random() * 55;
+    releaseParticles.push({
+      xNorm,
+      yNorm,
+      dx: Math.cos(ang) * spd,
+      dy: Math.sin(ang) * spd - 22,
+      alpha: 1,
+      size: 1.5 + Math.random() * 2.5
+    });
+  }
+}
+
+// =========================================================================
+// 9. ARCHIVE, DRESS-UP, SOUND MIXER, SPEECH BUBBLES & 1:1 CHAT
+// =========================================================================
+function openArchiveModal() {
+  const layer = document.getElementById(`constellation-stars-layer`);
+  const emptyEl = document.getElementById(`constellation-empty`);
+  const summaryEl = document.getElementById(`archive-boat-summary`);
+  if (!layer || !emptyEl) return;
+
+  layer.innerHTML = ``;
+  const totalStars = personalState.collectedLetters.length + personalState.keptLetters.length;
+  emptyEl.style.display = totalStars === 0 ? `flex` : `none`;
+
+  personalState.collectedLetters.forEach((item, idx) => {
+    const b = document.createElement(`button`);
+    b.type = `button`;
+    b.className = `constellation-star-btn`;
+    b.style.left = (item.xPct || (15 + (idx * 17) % 70)) + `%`;
+    b.style.top = (item.yPct || (22 + (idx * 23) % 55)) + `%`;
+    b.title = `To. ${item.letter.to}`;
+    b.innerHTML = `<span class="constellation-star-core"></span>`;
+    b.onclick = function () {
+      closeModal(`archive-modal`);
+      SoundEngine.playPianoChime();
+      openReadLetterModal({ source: `archive`, letter: item.letter });
+    };
+    layer.appendChild(b);
+  });
+
+  personalState.keptLetters.forEach((item, idx) => {
+    const b = document.createElement(`button`);
+    b.type = `button`;
+    b.className = `constellation-star-btn is-kept`;
+    b.style.left = (16 + ((idx * 29 + 13) % 68)) + `%`;
+    b.style.top = (18 + ((idx * 31 + 19) % 64)) + `%`;
+    b.title = `[간직한 편지] To. ${item.to}`;
+    b.innerHTML = `<span class="constellation-star-core"></span>`;
+    b.onclick = function () {
+      closeModal(`archive-modal`);
+      SoundEngine.playPianoChime();
+      openReadLetterModal({ source: `kept`, letter: item });
+    };
+    layer.appendChild(b);
+  });
+
+  if (summaryEl) {
+    summaryEl.textContent = `현재 연못에 띄운 자연의 종이배: ${personalState.paperBoats.length}척 (연못 위의 종이배를 클릭하면 다시 읽을 수 있습니다)`;
+  }
+  openModal(`archive-modal`);
+}
+
+function openDressModal() {
+  updateDressUI();
+  openModal(`dress-modal`);
+}
+
+function selectAccessory(acc) {
+  player.accessory = acc;
+  personalState.accessory = acc;
+  updateDressUI();
+  savePersistedState();
+  emitPlayerState(true);
+}
+
+function updateDressUI() {
+  const grid = document.getElementById(`dress-choice-grid`);
+  if (!grid) return;
+  grid.querySelectorAll(`.choice-card`).forEach(btn => {
+    btn.classList.toggle(`is-selected`, btn.getAttribute(`data-acc`) === player.accessory);
+  });
+}
+
+function openSoundModal() {
+  SoundEngine.init();
+  applyVolumeInputs();
+  openModal(`sound-modal`);
+}
+
+function applyVolumeInputs() {
+  const map = [
+    [`vol-bgm`, `vol-bgm-val`, personalState.volumes.bgm],
+    [`vol-sfx`, `vol-sfx-val`, personalState.volumes.sfx],
+    [`vol-water`, `vol-water-val`, personalState.volumes.water]
+  ];
+  map.forEach(([id, valId, v]) => {
+    const inp = document.getElementById(id);
+    const lbl = document.getElementById(valId);
+    if (inp) inp.value = v;
+    if (lbl) lbl.textContent = `${v}%`;
+  });
+}
+
+function updateVolume(channel, val) {
+  SoundEngine.init();
+  const num = Math.max(0, Math.min(100, parseInt(val, 10) || 0));
+  personalState.volumes[channel] = num;
+  const lbl = document.getElementById(`vol-${channel}-val`);
+  if (lbl) lbl.textContent = `${num}%`;
+  SoundEngine.applyGains();
+  savePersistedState();
+}
+
+// Speech Bubble (Enter key or Peer Popover)
+function openSpeechInput() {
+  if (!currentPlanetId) return;
+  const bar = document.getElementById(`speech-input-bar`);
+  const inp = document.getElementById(`speech-input-field`);
+  if (!bar || !inp) return;
+  bar.classList.add(`is-open`);
+  inp.value = ``;
+  setTimeout(() => inp.focus(), 20);
+}
+
+function closeSpeechInput() {
+  const bar = document.getElementById(`speech-input-bar`);
+  if (bar) bar.classList.remove(`is-open`);
+}
+
+function submitSpeechBubble(e) {
+  e.preventDefault();
+  const inp = document.getElementById(`speech-input-field`);
+  if (!inp) return;
+  const text = inp.value.trim();
+  closeSpeechInput();
+  if (!text || !currentPlanetId) return;
+
+  player.speechText = text;
+  player.speechUntil = performance.now() + 5000;
+  broadcastAction({
+    type: `peerChat`,
+    planetId: currentPlanetId,
+    senderId: getMyPeerId(),
+    text
+  });
+}
+
+function openPeerPopover(peerId, screenX, screenY) {
+  selectedPeerId = peerId;
+  const pop = document.getElementById(`peer-action-popover`);
+  if (!pop) return;
+  pop.style.left = Math.min(window.innerWidth - 190, Math.max(12, screenX - 85)) + `px`;
+  pop.style.top = Math.max(12, screenY - 145) + `px`;
+  pop.classList.add(`is-open`);
+}
+
+function closePeerPopover() {
+  selectedPeerId = null;
+  const pop = document.getElementById(`peer-action-popover`);
+  if (pop) pop.classList.remove(`is-open`);
+}
+
+function triggerSpeechForPeer() {
+  closePeerPopover();
+  openSpeechInput();
+}
+
+function sendChatRequestToPeer() {
+  if (!selectedPeerId) return;
+  const targetId = selectedPeerId;
+  closePeerPopover();
+  broadcastAction({
+    type: `chatRequest`,
+    planetId: currentPlanetId,
+    senderId: getMyPeerId(),
+    targetId
+  });
+  showFloatingNotice(`대화 요청을 조용히 전했습니다.`);
+}
+
+function respondChatRequest(accepted) {
+  const toast = document.getElementById(`chat-request-toast`);
+  if (toast) toast.classList.remove(`is-open`);
+  if (!pendingIncomingChatPeerId) return;
+  const peerId = pendingIncomingChatPeerId;
+  pendingIncomingChatPeerId = null;
+
+  if (accepted) {
+    broadcastAction({
+      type: `chatAccept`,
+      planetId: currentPlanetId,
+      senderId: getMyPeerId(),
+      targetId: peerId
+    });
+    openPrivateChatWith(peerId);
+  } else {
+    broadcastAction({
+      type: `chatDecline`,
+      planetId: currentPlanetId,
+      senderId: getMyPeerId(),
+      targetId: peerId
+    });
+  }
+}
+
+function openPrivateChatWith(peerId) {
+  activeChatPeerId = peerId;
+  const box = document.getElementById(`private-chat-box`);
+  const msgs = document.getElementById(`private-chat-messages`);
+  if (!box || !msgs) return;
+  msgs.innerHTML = ``;
+  appendChatBubble(`익명의 여행자와 조용한 대화가 시작되었습니다.`, `is-system`);
+  box.classList.add(`is-open`);
+}
+
+function appendChatBubble(text, cls) {
+  const msgs = document.getElementById(`private-chat-messages`);
+  if (!msgs) return;
+  const div = document.createElement(`div`);
+  div.className = `chat-msg ` + cls;
+  div.textContent = text;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function submitPrivateChat(e) {
+  e.preventDefault();
+  const inp = document.getElementById(`private-chat-input`);
+  if (!inp || !activeChatPeerId) return;
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = ``;
+  appendChatBubble(text, `is-mine`);
+  broadcastAction({
+    type: `chatMessage`,
+    planetId: currentPlanetId,
+    senderId: getMyPeerId(),
+    targetId: activeChatPeerId,
+    text
+  });
+}
+
+function endPrivateChat(notifyPeer, customMsg) {
+  const peerId = activeChatPeerId;
+  activeChatPeerId = null;
+  if (notifyPeer && peerId) {
+    broadcastAction({
+      type: `chatEnd`,
+      planetId: currentPlanetId,
+      senderId: getMyPeerId(),
+      targetId: peerId
+    });
+  }
+  const box = document.getElementById(`private-chat-box`);
+  if (customMsg) {
+    appendChatBubble(customMsg, `is-system`);
+    setTimeout(() => { if (box && !activeChatPeerId) box.classList.remove(`is-open`); }, 1600);
+  } else if (box) {
+    box.classList.remove(`is-open`);
+  }
+}
+
+function showFloatingNotice(msg) {
+  const hint = document.querySelector(`.hud-bottom-hint`);
+  if (!hint) return;
+  const prev = hint.textContent;
+  hint.textContent = msg;
+  hint.style.opacity = `0.9`;
+  setTimeout(() => {
+    hint.textContent = `하늘을 클릭하면 궤도가 보이게 됩니다.`;
+    hint.style.opacity = `0.56`;
+  }, 2600);
+}
+
+// =========================================================================
+// 10. ADMIN VISUAL EFFECTS & SKY TRANSITIONS
+// =========================================================================
+function setSkyPalette(name) {
+  if (!SKY_PALETTES[name]) return;
+  skyState.currentName = skyState.targetName;
+  skyState.targetName = name;
+  skyState.blend = 0;
+}
+
+function triggerAdminSky(name) {
+  if (!isAdmin) return;
+  setSkyPalette(name);
+  broadcastAction({ type: `skyColor`, planetId: currentPlanetId, skyName: name });
+  closeModal(`admin-modal`);
+}
+
+function triggerAdminEffect(kind) {
+  if (!isAdmin) return;
+  closeModal(`admin-modal`);
+
+  if (kind === `aurora`) {
+    skyState.auroraActive = !skyState.auroraActive;
+    broadcastAction({ type: `aurora`, planetId: currentPlanetId, active: skyState.auroraActive });
+  } else if (kind === `meteors`) {
+    const meteors = [];
+    for (let i = 0; i < 11; i++) {
+      meteors.push({
+        x: 0.1 + Math.random() * 0.9,
+        y: -0.05 - Math.random() * 0.25,
+        vx: -0.22 - Math.random() * 0.2,
+        vy: 0.16 + Math.random() * 0.14,
+        len: 90 + Math.random() * 110,
+        alpha: 0.65 + Math.random() * 0.35,
+        delay: i * 160
+      });
+    }
+    spawnMeteorShower(meteors);
+    broadcastAction({ type: `meteors`, planetId: currentPlanetId, meteors });
+  } else if (kind === `fireworks`) {
+    const bursts = [];
+    const palette = [
+      [223, 170, 91], [124, 196, 232], [82, 209, 156], [242, 168, 196], [242, 236, 225]
+    ];
+    for (let b = 0; b < 5; b++) {
+      bursts.push({
+        x: 0.18 + Math.random() * 0.64,
+        y: 0.14 + Math.random() * 0.26,
+        color: palette[b % palette.length],
+        delay: b * 320,
+        seed: Math.random() * 1000
+      });
+    }
+    spawnStarlightFireworks(bursts);
+    broadcastAction({ type: `fireworks`, planetId: currentPlanetId, bursts });
+  } else if (kind === `dropLetter`) {
+    createAndDropLetterStar();
+  }
+}
+
+function spawnMeteorShower(meteors) {
+  SoundEngine.playMeteorMusic();
+  (meteors || []).forEach(m => {
+    setTimeout(() => {
+      bgMeteors.push({
+        x: m.x, y: m.y, vx: m.vx, vy: m.vy, len: m.len, alpha: m.alpha, life: 1
+      });
+    }, m.delay || 0);
+  });
+}
+
+function spawnStarlightFireworks(bursts) {
+  SoundEngine.playFireworkAudio();
+  (bursts || []).forEach(b => {
+    setTimeout(() => {
+      skyState.flashAlpha = 0.28;
+      skyState.flashColor = b.color;
+      const count = 88;
+      for (let i = 0; i < count; i++) {
+        const ang = (i / count) * Math.PI * 2 + (Math.random() - 0.5) * 0.18;
+        const spd = 45 + Math.random() * 175;
+        fireworks.push({
+          xNorm: b.x,
+          yNorm: b.y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd,
+          color: i % 4 === 0 ? [242, 236, 225] : b.color,
+          alpha: 1,
+          size: 1.4 + Math.random() * 2.2,
+          drag: 0.965,
+          gravity: 28,
+          decay: 0.24 + Math.random() * 0.22
+        });
+      }
+    }, b.delay || 0);
+  });
+}
+
+function spawnWaterDroplets(xNorm, yNorm, count) {
+  for (let i = 0; i < count; i++) {
+    const ang = -Math.PI * 0.15 - Math.random() * Math.PI * 0.7;
+    const spd = 25 + Math.random() * 48;
+    waterDroplets.push({
+      xNorm, yNorm,
+      ox: 0, oy: 0,
+      vx: Math.cos(ang) * spd,
+      vy: Math.sin(ang) * spd - 12,
+      alpha: 0.95,
+      size: 1.5 + Math.random() * 1.8
+    });
+  }
+}
+
+// =========================================================================
+// 11. MODAL HELPERS
+// =========================================================================
+function openModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.add(`is-open`);
+}
+
+function closeModal(id) {
+  const el = document.getElementById(id);
+  if (el) el.classList.remove(`is-open`);
+}
+
+function isAnyModalOpen() {
+  return Boolean(document.querySelector(`.modal-backdrop.is-open`)) ||
+    document.getElementById(`speech-input-bar`).classList.contains(`is-open`);
+}
+
+// =========================================================================
+// 12. CANVAS SCENE INITIALIZATION & INTERACTION HANDLERS
+// =========================================================================
+function initSceneAssets() {
+  bgStars = [];
+  for (let i = 0; i < 210; i++) {
+    bgStars.push({
+      x: Math.random(),
+      y: Math.random() * 0.7,
+      r: 0.5 + Math.random() * 1.4,
+      phase: Math.random() * Math.PI * 2,
+      speed: 0.6 + Math.random() * 1.8,
+      tint: Math.random() < 0.2 ? `rgba(223, 170, 91, 1)` : (Math.random() < 0.25 ? `rgba(124, 196, 232, 1)` : `rgba(242, 236, 225, 1)`)
+    });
+  }
+
+  grassTufts = [];
+  for (let i = 0; i < 65; i++) {
+    grassTufts.push({
+      x: 0.02 + Math.random() * 0.96,
+      yOff: Math.random() * 0.28,
+      blades: 3 + Math.floor(Math.random() * 3),
+      height: 10 + Math.random() * 14,
+      lean: (Math.random() - 0.5) * 0.5,
+      phase: Math.random() * Math.PI * 2
+    });
+  }
+
+  fireflies = [];
+  for (let i = 0; i < 24; i++) {
+    fireflies.push({
+      x: 0.04 + Math.random() * 0.92,
+      y: 0.66 + Math.random() * 0.27,
+      vx: (Math.random() - 0.5) * 0.012,
+      vy: (Math.random() - 0.5) * 0.006,
+      phase: Math.random() * Math.PI * 2,
+      size: 1.4 + Math.random() * 1.4
+    });
+  }
+}
+
+function setupCanvasInteraction() {
+  const canvas = document.getElementById(`cosmos-canvas`);
+  if (!canvas) return;
+
+  canvas.addEventListener(`mousemove`, (e) => {
+    const rect = canvas.getBoundingClientRect();
+    mousePos.x = e.clientX - rect.left;
+    mousePos.y = e.clientY - rect.top;
+    mousePos.active = true;
+
+    if (!currentPlanetId || isAnyModalOpen()) return;
+    const w = canvas.width;
+    const h = canvas.height;
+    const groundY = getGroundY(mousePos.x, w, h);
+
+    // Follow mouse horizontally smoothly when no locked target (e.g. walking to fallen letter)
+    if (!player.pendingAction && mousePos.y >= groundY - 24 && !isDraggingSky) {
+      player.targetX = Math.max(0.03, Math.min(0.97, mousePos.x / w));
+    }
+  });
+
+  canvas.addEventListener(`mouseleave`, () => {
+    mousePos.active = false;
+    isDraggingSky = false;
+  });
+
+  canvas.addEventListener(`mousedown`, (e) => {
+    if (!currentPlanetId || isAnyModalOpen()) return;
+    SoundEngine.init();
+    closePeerPopover();
+
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const w = canvas.width;
+    const h = canvas.height;
+
+    // 1. Check remote peer click
+    for (const pid of Object.keys(remoteTabs)) {
+      const peer = remoteTabs[pid];
+      const px = peer.x * w;
+      const py = peer.y * h - (peer.jumpOffset || 0);
+      if (Math.hypot(cx - px, cy - (py - 22)) < 28) {
+        openPeerPopover(pid, e.clientX, e.clientY);
+        return;
+      }
+    }
+
+    // 2. Check trajectory star click
+    for (const tr of trajectories) {
+      for (const st of tr.stars) {
+        const pt = evalCubicBezier(tr, st.t);
+        const sx = pt.x * w;
+        const sy = pt.y * h;
+        if (sy < getGroundY(sx, w, h) && Math.hypot(cx - sx, cy - sy) < 20) {
+          openWriteLetterModal(tr.id, st.id);
+          return;
+        }
+      }
+    }
+
+    // 3. Check fallen letter star click -> walk to it first!
+    for (const fl of fallenLetters) {
+      if (!fl.landed) continue;
+      const fx = fl.xNorm * w;
+      const fy = fl.yNorm * h;
+      if (Math.hypot(cx - fx, cy - fy) < 24) {
+        player.targetX = fl.xNorm;
+        player.targetY = fl.yNorm;
+        player.pendingAction = { type: `fallen`, uid: fl.uid };
+        return;
+      }
+    }
+
+    // 4. Check paper boat click on pond -> walk to it first!
+    for (const boat of personalState.paperBoats) {
+      const bx = boat.nx * w;
+      const by = boat.ny * h;
+      if (Math.hypot(cx - bx, cy - by) < 22) {
+        player.targetX = boat.nx;
+        player.targetY = boat.ny;
+        player.pendingAction = { type: `boat`, boatId: boat.id };
+        return;
+      }
+    }
+
+    // 5. Click on meadow or pond -> set X & Y walk destination (cancels previous target)
+    const groundY = getGroundY(cx, w, h);
+    if (cy >= groundY) {
+      const clamped = clampPlayerPosition(cx / w, cy / h, w, h);
+      player.targetX = clamped.x;
+      player.targetY = clamped.y;
+      player.pendingAction = null;
+      return;
+    }
+
+    // 6. Click/drag in empty sky -> begin trajectory draw
+    isDraggingSky = true;
+    dragStartPt = { x: cx / w, y: cy / h };
+  });
+
+  canvas.addEventListener(`mouseup`, (e) => {
+    if (!isDraggingSky) return;
+    isDraggingSky = false;
+    const rect = canvas.getBoundingClientRect();
+    const cx = e.clientX - rect.left;
+    const cy = e.clientY - rect.top;
+    const endPt = { x: cx / canvas.width, y: cy / canvas.height };
+    createSkyTrajectories(dragStartPt, endPt);
+    dragStartPt = null;
+  });
+
+  window.addEventListener(`keydown`, (e) => {
+    const activeTag = document.activeElement ? document.activeElement.tagName.toLowerCase() : ``;
+    const typing = activeTag === `input` || activeTag === `textarea`;
+    if (typing) return;
+
+    if (e.code === `Space` && currentPlanetId && !isAnyModalOpen()) {
+      e.preventDefault();
+      if (!player.isJumping) {
+        SoundEngine.init();
+        player.isJumping = true;
+        player.jumpVel = 240;
+        if (player.inPond) {
+          SoundEngine.playWaterSplash(false);
+          pondRipples.push({ xNorm: player.x, yNorm: player.y, radius: 5, maxR: 34, alpha: 0.8 });
+          spawnWaterDroplets(player.x, player.y, 5);
+          broadcastAction({
+            type: `pondRipple`, planetId: currentPlanetId, senderId: getMyPeerId(),
+            xNorm: player.x, yNorm: player.y, maxR: 34, isSplash: true, isLanding: false
+          });
+        }
+        emitPlayerState(true);
+      }
+    } else if (e.key === `Enter` && currentPlanetId && !isAnyModalOpen()) {
+      e.preventDefault();
+      openSpeechInput();
+    } else if (e.key === `Escape`) {
+      closeSpeechInput();
+      closePeerPopover();
+    }
+  });
+}
+
+// =========================================================================
+// 13. MAIN SIMULATION & RENDERING LOOP (Layered Graphic Rules §23)
+// =========================================================================
+function lerpColor(c1, c2, t) {
+  return [
+    Math.round(c1[0] + (c2[0] - c1[0]) * t),
+    Math.round(c1[1] + (c2[1] - c1[1]) * t),
+    Math.round(c1[2] + (c2[2] - c1[2]) * t)
+  ];
+}
+
+function getCurrentSkyColors() {
+  const a = SKY_PALETTES[skyState.currentName] || SKY_PALETTES[`Deep Cosmos`];
+  const b = SKY_PALETTES[skyState.targetName] || a;
+  const t = skyState.blend;
+  return {
+    top: lerpColor(a.top, b.top, t),
+    mid: lerpColor(a.mid, b.mid, t),
+    horizon: lerpColor(a.horizon, b.horizon, t),
+    ambient: lerpColor(a.ambient, b.ambient, t)
+  };
+}
+
+function updateSimulation(dt, now, w, h) {
+  // Sky transition
+  if (skyState.blend < 1) {
+    skyState.blend = Math.min(1, skyState.blend + dt * 0.25);
+  }
+  if (skyState.auroraActive && skyState.auroraAlpha < 1) {
+    skyState.auroraAlpha = Math.min(1, skyState.auroraAlpha + dt * 0.35);
+  } else if (!skyState.auroraActive && skyState.auroraAlpha > 0) {
+    skyState.auroraAlpha = Math.max(0, skyState.auroraAlpha - dt * 0.25);
+  }
+  if (skyState.flashAlpha > 0) {
+    skyState.flashAlpha = Math.max(0, skyState.flashAlpha - dt * 0.65);
+  }
+
+  // Player movement
+  let moving = false;
+  if (currentPlanetId) {
+    const speedNormX = 0.14;
+    const speedNormY = 0.11;
+    if (player.targetX !== null) {
+      const dx = player.targetX - player.x;
+      const dy = player.targetY !== null ? (player.targetY - player.y) : 0;
+      const dist = Math.hypot(dx * w, dy * h);
+      if (dist > 4) {
+        moving = true;
+        if (Math.abs(dx) > 0.002) player.facing = dx >= 0 ? 1 : -1;
+        const stepX = (dx * w) / dist * speedNormX * dt;
+        const stepY = (dy * h) / dist * speedNormY * dt;
+        const next = clampPlayerPosition(player.x + stepX, player.y + stepY, w, h);
+        player.x = next.x;
+        player.y = next.y;
+      } else {
+        player.targetX = null;
+        player.targetY = null;
+        if (player.pendingAction) {
+          const act = player.pendingAction;
+          player.pendingAction = null;
+          if (act.type === `fallen`) {
+            const fl = fallenLetters.find(f => f.uid === act.uid);
+            if (fl) {
+              SoundEngine.playPianoChime();
+              openReadLetterModal({
+                source: `fallen`,
+                uid: fl.uid,
+                xNorm: fl.xNorm,
+                yNorm: fl.yNorm,
+                letter: fl.letter
+              });
+            }
+          } else if (act.type === `boat`) {
+            const boat = personalState.paperBoats.find(b => b.id === act.boatId);
+            if (boat) {
+              SoundEngine.playPianoChime();
+              openReadLetterModal({ source: `boat`, letter: boat.letter });
+            }
+          }
+        }
+      }
+    }
+    player.isMoving = moving;
+
+    // Jump physics
+    if (player.isJumping) {
+      player.jumpOffset += player.jumpVel * dt;
+      player.jumpVel -= 620 * dt;
+      if (player.jumpOffset <= 0) {
+        player.jumpOffset = 0;
+        player.jumpVel = 0;
+        player.isJumping = false;
+        if (player.inPond) {
+          SoundEngine.playWaterSplash(true);
+          pondRipples.push({ xNorm: player.x, yNorm: player.y, radius: 6, maxR: 42, alpha: 0.9 });
+          spawnWaterDroplets(player.x, player.y, 9);
+          broadcastAction({
+            type: `pondRipple`, planetId: currentPlanetId, senderId: getMyPeerId(),
+            xNorm: player.x, yNorm: player.y, maxR: 42, isSplash: true, isLanding: true
+          });
+        }
+      }
+    }
+
+    // Pond detection & footsteps
+    player.inPond = isPointInPond(player.x * w, player.y * h, w, h);
+    if (moving) {
+      player.walkPhase += dt * 9.5;
+      player.cloakWave += dt * 8;
+      stepSoundCooldown -= dt;
+      if (player.inPond && !player.isJumping && stepSoundCooldown <= 0) {
+        stepSoundCooldown = 0.34;
+        SoundEngine.playWaterStep();
+        pondRipples.push({ xNorm: player.x, yNorm: player.y, radius: 3, maxR: 26, alpha: 0.72 });
+        broadcastAction({
+          type: `pondRipple`, planetId: currentPlanetId, senderId: getMyPeerId(),
+          xNorm: player.x, yNorm: player.y, maxR: 26, isSplash: false
+        });
+      }
+    } else {
+      player.cloakWave += dt * 1.4;
+    }
+
+    // Admin Red Cloak Wetness (>=10s in pond wets from bottom; <=5s on land dries)
+    if (player.cloak) {
+      if (player.inPond) {
+        player.pondStaySec += dt;
+        if (player.pondStaySec >= 10) {
+          player.cloakWetness = Math.min(1, player.cloakWetness + dt * 0.25);
+        }
+      } else {
+        player.pondStaySec = 0;
+        if (player.cloakWetness > 0) {
+          player.cloakWetness = Math.max(0, player.cloakWetness - dt * 0.22); // <= 5 seconds
+        }
+      }
+    }
+
+    if (moving || player.isJumping) {
+      emitPlayerState(false);
+    }
+  }
+
+  // Smooth remote peer interpolation
+  Object.keys(remoteTabs).forEach(pid => {
+    const p = remoteTabs[pid];
+    const dx = p.targetX - p.x;
+    const dy = p.targetY - p.y;
+    p.x += dx * Math.min(1, dt * 8);
+    p.y += dy * Math.min(1, dt * 8);
+    if (p.isMoving) {
+      p.walkPhase += dt * 9.5;
+      p.cloakWave += dt * 8;
+    } else {
+      p.cloakWave += dt * 1.4;
+    }
+  });
+
+  // Update trajectories & 60s countdown -> soar into sky
+  const epochNow = Date.now();
+  const toRemoveTrajs = [];
+  trajectories.forEach(tr => {
+    if (tr.drawProgress < 1) {
+      tr.drawProgress = Math.min(1, tr.drawProgress + dt * 0.42);
+    }
+    for (let i = tr.stars.length - 1; i >= 0; i--) {
+      const st = tr.stars[i];
+      if (st.status === `countdown`) {
+        const elapsed = epochNow - st.sentAt;
+        if (elapsed >= COUNTDOWN_MS) {
+          const pt = evalCubicBezier(tr, st.t);
+          soaringStars.push({
+            x: pt.x, y: pt.y,
+            vx: (Math.random() - 0.5) * 0.14,
+            vy: -0.36 - Math.random() * 0.14,
+            alpha: 1,
+            flash: 1
+          });
+          tr.stars.splice(i, 1);
+        }
+      }
+    }
+    if (tr.stars.length === 0) {
+      toRemoveTrajs.push(tr.id);
+    }
+  });
+  if (toRemoveTrajs.length) {
+    trajectories = trajectories.filter(t => !toRemoveTrajs.includes(t.id));
+  }
+
+  // Soaring stars
+  for (let i = soaringStars.length - 1; i >= 0; i--) {
+    const s = soaringStars[i];
+    s.x += s.vx * dt;
+    s.y += s.vy * dt;
+    s.flash = Math.max(0, s.flash - dt * 1.8);
+    s.alpha -= dt * 0.48;
+    if (s.alpha <= 0 || s.y < -0.15) soaringStars.splice(i, 1);
+  }
+
+  // Background & Admin meteors
+  for (let i = bgMeteors.length - 1; i >= 0; i--) {
+    const m = bgMeteors[i];
+    m.x += m.vx * dt;
+    m.y += m.vy * dt;
+    m.life -= dt * 0.36;
+    if (m.life <= 0) bgMeteors.splice(i, 1);
+  }
+
+  // Fireworks
+  for (let i = fireworks.length - 1; i >= 0; i--) {
+    const p = fireworks[i];
+    p.xNorm += (p.vx * dt) / w;
+    p.yNorm += (p.vy * dt) / h;
+    p.vx *= p.drag;
+    p.vy = p.vy * p.drag + p.gravity * dt;
+    p.alpha -= p.decay * dt;
+    if (p.alpha <= 0) fireworks.splice(i, 1);
+  }
+
+  // Fallen letters descending
+  fallenLetters.forEach(fl => {
+    if (!fl.landed) {
+      fl.dropY += dt * 0.24;
+      if (fl.dropY >= fl.yNorm) {
+        fl.dropY = fl.yNorm;
+        fl.landed = true;
+      }
+    }
+  });
+
+  // Pond ripples
+  for (let i = pondRipples.length - 1; i >= 0; i--) {
+    const r = pondRipples[i];
+    r.radius += dt * 26;
+    r.alpha -= dt * 0.68;
+    if (r.alpha <= 0 || r.radius >= r.maxR) pondRipples.splice(i, 1);
+  }
+
+  // Water droplets
+  for (let i = waterDroplets.length - 1; i >= 0; i--) {
+    const d = waterDroplets[i];
+    d.ox += d.vx * dt;
+    d.oy += d.vy * dt;
+    d.vy += 170 * dt;
+    d.alpha -= dt * 1.3;
+    if (d.alpha <= 0) waterDroplets.splice(i, 1);
+  }
+
+  // Release particles
+  for (let i = releaseParticles.length - 1; i >= 0; i--) {
+    const p = releaseParticles[i];
+    p.xNorm += (p.dx * dt) / w;
+    p.yNorm += (p.dy * dt) / h;
+    p.alpha -= dt * 0.55;
+    if (p.alpha <= 0) releaseParticles.splice(i, 1);
+  }
+
+  // Fireflies
+  fireflies.forEach(f => {
+    f.phase += dt * 2.1;
+    f.x += f.vx * dt;
+    f.y += f.vy * dt;
+    if (f.x < 0.02 || f.x > 0.98) f.vx *= -1;
+    if (f.y < 0.65 || f.y > 0.94) f.vy *= -1;
+  });
+}
+
+function drawSkyLayers(ctx, w, h, now, skyCols, reflectMode) {
+  // Layer 1 & 2: Sky gradient + Milky Way band
+  const grad = ctx.createLinearGradient(0, 0, 0, h * 0.72);
+  grad.addColorStop(0, `rgb(${skyCols.top.join(`,`)})`);
+  grad.addColorStop(0.55, `rgb(${skyCols.mid.join(`,`)})`);
+  grad.addColorStop(1, `rgb(${skyCols.horizon.join(`,`)})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+
+  // Milky Way diagonal soft luminous veil
+  ctx.save();
+  ctx.translate(w * 0.5, h * 0.34);
+  ctx.rotate(-0.24);
+  const mw = ctx.createLinearGradient(0, -h * 0.22, 0, h * 0.22);
+  mw.addColorStop(0, `rgba(124, 196, 232, 0)`);
+  mw.addColorStop(0.45, `rgba(166, 200, 240, 0.08)`);
+  mw.addColorStop(0.55, `rgba(223, 170, 91, 0.06)`);
+  mw.addColorStop(1, `rgba(124, 196, 232, 0)`);
+  ctx.fillStyle = mw;
+  ctx.fillRect(-w, -h * 0.22, w * 2, h * 0.44);
+  ctx.restore();
+
+  // Aurora ribbons
+  if (skyState.auroraAlpha > 0.01) {
+    ctx.save();
+    const t = now * 0.00045;
+    for (let r = 0; r < 2; r++) {
+      ctx.beginPath();
+      const baseY = h * (0.2 + r * 0.09);
+      ctx.moveTo(0, baseY);
+      for (let x = 0; x <= w; x += 28) {
+        const wave = Math.sin(x * 0.005 + t + r) * 32 + Math.cos(x * 0.009 - t * 1.3) * 18;
+        ctx.lineTo(x, baseY + wave);
+      }
+      ctx.lineTo(w, 0);
+      ctx.lineTo(0, 0);
+      ctx.closePath();
+      const ag = ctx.createLinearGradient(0, baseY - 120, 0, baseY + 60);
+      ag.addColorStop(0, `rgba(82, 209, 156, 0)`);
+      ag.addColorStop(0.65, `rgba(82, 209, 156, ${0.14 * skyState.auroraAlpha})`);
+      ag.addColorStop(1, `rgba(124, 196, 232, ${0.06 * skyState.auroraAlpha})`);
+      ctx.fillStyle = ag;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // Layer 3: Twinkling background stars
+  bgStars.forEach(s => {
+    const tw = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(now * 0.001 * s.speed + s.phase));
+    ctx.globalAlpha = tw * (reflectMode ? 0.65 : 0.9);
+    ctx.fillStyle = s.tint;
+    ctx.beginPath();
+    ctx.arc(s.x * w, s.y * h, s.r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1;
+
+  // Layer 4: Trajectories + Letter Stars
+  trajectories.forEach(tr => {
+    const steps = Math.max(2, Math.floor(60 * tr.drawProgress));
+    ctx.save();
+    ctx.beginPath();
+    for (let i = 0; i <= steps; i++) {
+      const t = (i / 60);
+      const pt = evalCubicBezier(tr, t);
+      const px = pt.x * w;
+      const py = pt.y * h;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.strokeStyle = `rgba(218, 230, 250, 0.34)`;
+    ctx.lineWidth = 1.25;
+    ctx.shadowColor = `rgba(124, 196, 232, 0.45)`;
+    ctx.shadowBlur = 8;
+    ctx.stroke();
+    ctx.restore();
+
+    if (tr.drawProgress > 0.3) {
+      tr.stars.forEach(st => {
+        if (st.t > tr.drawProgress) return;
+        const pt = evalCubicBezier(tr, st.t);
+        const sx = pt.x * w;
+        const sy = pt.y * h;
+        const hoverDist = mousePos.active ? Math.hypot(mousePos.x - sx, mousePos.y - sy) : 999;
+        const hoverGlow = hoverDist < 95 ? (1 - hoverDist / 95) * 0.8 : 0;
+
+        let auraColor = `124, 196, 232`;
+        let auraR = 14 + hoverGlow * 14;
+        let pulse = 1;
+
+        if (st.status === `countdown`) {
+          const elapsed = Date.now() - st.sentAt;
+          if (elapsed >= 50000) {
+            // Last 10s warm amber/gold pulse
+            auraColor = `240, 178, 86`;
+            pulse = 1 + 0.35 * Math.sin(now * 0.005);
+            auraR = 20 * pulse + hoverGlow * 10;
+          } else {
+            // 0-50s aurora shift
+            const ratio = elapsed / 50000;
+            auraColor = ratio < 0.5 ? `82, 209, 156` : `176, 134, 232`;
+            auraR = 16 + hoverGlow * 12;
+          }
+        }
+
+        const rg = ctx.createRadialGradient(sx, sy, 1, sx, sy, auraR);
+        rg.addColorStop(0, `rgba(255, 252, 240, 0.95)`);
+        rg.addColorStop(0.35, `rgba(${auraColor}, ${0.55 + hoverGlow * 0.3})`);
+        rg.addColorStop(1, `rgba(${auraColor}, 0)`);
+        ctx.fillStyle = rg;
+        ctx.beginPath();
+        ctx.arc(sx, sy, auraR, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = `#fffdf5`;
+        ctx.beginPath();
+        ctx.arc(sx, sy, 2.4 + hoverGlow * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      });
+    }
+  });
+
+  // Layer 5: Background & Admin Decorative Shooting Stars (behind ground!)
+  bgMeteors.forEach(m => {
+    const x1 = m.x * w;
+    const y1 = m.y * h;
+    const ang = Math.atan2(m.vy, m.vx);
+    const x0 = x1 - Math.cos(ang) * m.len;
+    const y0 = y1 - Math.sin(ang) * m.len;
+    const lg = ctx.createLinearGradient(x0, y0, x1, y1);
+    lg.addColorStop(0, `rgba(242, 236, 225, 0)`);
+    lg.addColorStop(1, `rgba(242, 236, 225, ${m.alpha * m.life})`);
+    ctx.strokeStyle = lg;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x0, y0);
+    ctx.lineTo(x1, y1);
+    ctx.stroke();
+  });
+}
+
+function drawCharacter(ctx, charObj, w, h, isMe) {
+  const x = charObj.x * w;
+  const groundY = charObj.y * h;
+  const y = groundY - (charObj.jumpOffset || 0);
+  const f = charObj.facing || 1;
+  const bob = charObj.isMoving && !charObj.isJumping ? Math.abs(Math.sin(charObj.walkPhase)) * 2.5 : 0;
+
+  ctx.save();
+  ctx.translate(x, y - bob);
+
+  // Soft ground shadow
+  ctx.fillStyle = charObj.inPond ? `rgba(6, 12, 24, 0.32)` : `rgba(4, 6, 12, 0.42)`;
+  ctx.beginPath();
+  ctx.ellipse(0, (charObj.jumpOffset || 0) + 2, 11, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Admin Red Cloak (drawn behind & around shoulders, billows with speed & gets darker/heavier when wet)
+  if (charObj.cloak) {
+    const wet = charObj.cloakWetness || 0;
+    const dryFactor = 1 - wet * 0.72;
+    const flutter = (charObj.isMoving ? 10 : 2.5) * dryFactor * Math.sin(charObj.cloakWave);
+    const tailX = -f * (12 + (charObj.isMoving ? 8 : 2) * dryFactor) + flutter * 0.4;
+
+    const cloakGrad = ctx.createLinearGradient(0, -28, 0, -2);
+    cloakGrad.addColorStop(0, `rgb(${Math.round(188 - wet * 30)}, ${Math.round(44 - wet * 16)}, ${Math.round(52 - wet * 16)})`);
+    cloakGrad.addColorStop(0.65, `rgb(${Math.round(166 - wet * 55)}, ${Math.round(34 - wet * 18)}, ${Math.round(42 - wet * 18)})`);
+    cloakGrad.addColorStop(1, `rgb(${Math.round(148 - wet * 92)}, ${Math.round(28 - wet * 20)}, ${Math.round(36 - wet * 22)})`);
+
+    ctx.fillStyle = cloakGrad;
+    ctx.beginPath();
+    ctx.moveTo(-f * 4, -29);
+    ctx.quadraticCurveTo(tailX, -15, tailX - f * 4, -3 + wet * 2);
+    ctx.lineTo(f * 6, -4);
+    ctx.lineTo(f * 5, -28);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Little black child silhouette (STRICTLY NO EYES OR WHITE SPOTS ON FACE)
+  const legSwing = charObj.isMoving ? Math.sin(charObj.walkPhase) * 4.5 : 0;
+  ctx.strokeStyle = `#090b10`;
+  ctx.lineWidth = 3.2;
+  ctx.lineCap = `round`;
+  ctx.beginPath();
+  ctx.moveTo(-3, -12);
+  ctx.lineTo(-3 + legSwing, -1);
+  ctx.moveTo(3, -12);
+  ctx.lineTo(3 - legSwing, -1);
+  ctx.stroke();
+
+  // Torso
+  ctx.fillStyle = `#090b10`;
+  ctx.beginPath();
+  ctx.roundRect(-6.5, -28, 13, 17, 5);
+  ctx.fill();
+
+  // Head (pure black, no eyes)
+  ctx.beginPath();
+  ctx.arc(0, -35, 9.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Accessories
+  const acc = charObj.accessory || `none`;
+  if (acc === `scarf`) {
+    ctx.fillStyle = `#4b8bd4`;
+    ctx.beginPath();
+    ctx.roundRect(-8, -28, 16, 4.5, 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(-f * 6 - 2, -25, 4.5, 11, 2);
+    ctx.fill();
+  } else if (acc === `hat`) {
+    ctx.fillStyle = `#e8c55a`;
+    ctx.beginPath();
+    ctx.ellipse(0, -43, 12, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.roundRect(-7, -51, 14, 9, 4);
+    ctx.fill();
+  } else if (acc === `ribbon`) {
+    ctx.fillStyle = `#eb8eb2`;
+    ctx.beginPath();
+    ctx.moveTo(-2, -43);
+    ctx.lineTo(-9, -48);
+    ctx.lineTo(-9, -39);
+    ctx.closePath();
+    ctx.moveTo(2, -43);
+    ctx.lineTo(9, -48);
+    ctx.lineTo(9, -39);
+    ctx.closePath();
+    ctx.fill();
+  } else if (acc === `tie`) {
+    ctx.fillStyle = `#52b87d`;
+    ctx.beginPath();
+    ctx.moveTo(0, -26);
+    ctx.lineTo(3, -17);
+    ctx.lineTo(0, -13);
+    ctx.lineTo(-3, -17);
+    ctx.closePath();
+    ctx.fill();
+  } else if (acc === `glasses`) {
+    // White frame ONLY, strictly NO pupils/eyes inside!
+    ctx.strokeStyle = `#f2ece1`;
+    ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.arc(-3.5 + f * 1.2, -35.5, 3, 0, Math.PI * 2);
+    ctx.moveTo(-0.5 + f * 1.2, -35.5);
+    ctx.lineTo(1.2 + f * 1.2, -35.5);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(4.2 + f * 1.2, -35.5, 3, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Floating glowing Speech Bubble above head (5 seconds)
+  if (charObj.speechText && performance.now() < charObj.speechUntil) {
+    const label = `💬 ${charObj.speechText}`;
+    ctx.font = `13px 'Noto Sans KR', sans-serif`;
+    const metrics = ctx.measureText(label);
+    const bw = Math.min(240, metrics.width + 24);
+    const bh = 30;
+    const bx = -bw / 2;
+    const by = -78;
+
+    ctx.save();
+    ctx.shadowColor = `rgba(124, 196, 232, 0.35)`;
+    ctx.shadowBlur = 14;
+    ctx.fillStyle = `rgba(17, 27, 46, 0.92)`;
+    ctx.strokeStyle = isMe ? `rgba(223, 170, 91, 0.65)` : `rgba(124, 196, 232, 0.65)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.roundRect(bx, by, bw, bh, 12);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = `#f2ece1`;
+    ctx.textAlign = `center`;
+    ctx.textBaseline = `middle`;
+    ctx.fillText(label, 0, by + bh / 2, bw - 14);
+    ctx.restore();
+  }
+
+  ctx.restore();
+}
+
+function renderFrame(now) {
+  const dt = Math.min(0.05, (now - lastFrameTime) / 1000);
+  lastFrameTime = now;
+
+  const canvas = document.getElementById(`cosmos-canvas`);
+  if (!canvas) return;
+  const targetW = canvas.clientWidth || window.innerWidth;
+  const targetH = canvas.clientHeight || window.innerHeight;
+  if (canvas.width !== targetW || canvas.height !== targetH) {
+    canvas.width = targetW;
+    canvas.height = targetH;
+  }
+
+  const w = canvas.width;
+  const h = canvas.height;
+  const ctx = canvas.getContext(`2d`);
+
+  updateSimulation(dt, now, w, h);
+  const skyCols = getCurrentSkyColors();
+
+  // LAYERS 1–5: Sky, Aurora, Background Stars, Sky Trajectories, Background Meteors
+  drawSkyLayers(ctx, w, h, now, skyCols, false);
+
+  // LAYER 6: Gently Curved Meadow Ground (clips background meteors & trajectories cleanly)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(0, h);
+  for (let x = 0; x <= w; x += 16) {
+    ctx.lineTo(x, getGroundY(x, w, h));
+  }
+  ctx.lineTo(w, h);
+  ctx.closePath();
+
+  const amb = skyCols.ambient;
+  const groundGrad = ctx.createLinearGradient(0, h * 0.62, 0, h);
+  groundGrad.addColorStop(0, `rgb(${Math.round(14 + amb[0] * 0.06)}, ${Math.round(22 + amb[1] * 0.06)}, ${Math.round(24 + amb[2] * 0.06)})`);
+  groundGrad.addColorStop(1, `rgb(7, 11, 14)`);
+  ctx.fillStyle = groundGrad;
+  ctx.fill();
+
+  // Dynamic ambient light wash on meadow from fireworks / aurora
+  if (skyState.flashAlpha > 0.01) {
+    ctx.fillStyle = `rgba(${skyState.flashColor.join(`,`)}, ${skyState.flashAlpha * 0.25})`;
+    ctx.fill();
+  }
+  if (skyState.auroraAlpha > 0.02) {
+    ctx.fillStyle = `rgba(82, 209, 156, ${skyState.auroraAlpha * 0.06})`;
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // LAYER 7: Organic Pond + Clipped Real-Time Rippled Reflection
+  ctx.save();
+  // Soft feathered shoreline soil/grass transition
+  tracePondPath(ctx, w, h, 1.07);
+  const shoreGrad = ctx.createRadialGradient(w * 0.5, h * 0.835, 10, w * 0.5, h * 0.835, w * 0.23);
+  shoreGrad.addColorStop(0, `rgba(26, 36, 34, 0.85)`);
+  shoreGrad.addColorStop(1, `rgba(14, 22, 24, 0)`);
+  ctx.fillStyle = shoreGrad;
+  ctx.fill();
+
+  // Clip strictly inside the pond contour!
+  tracePondPath(ctx, w, h, 1.0);
+  ctx.clip();
+
+  // Reflected inverted sky inside pond
+  ctx.save();
+  const pond = getPondBounds(w, h);
+  ctx.translate(0, pond.cy * 2);
+  ctx.scale(1, -0.45);
+  ctx.translate(Math.sin(now * 0.0018) * 3, 0);
+  ctx.globalAlpha = 0.72;
+  drawSkyLayers(ctx, w, h, now, skyCols, true);
+  ctx.restore();
+
+  // Reflected firework sparkles inside pond
+  fireworks.forEach(p => {
+    const ry = pond.cy + (pond.cy - p.yNorm * h) * 0.16;
+    ctx.fillStyle = `rgba(${p.color.join(`,`)}, ${p.alpha * 0.45})`;
+    ctx.beginPath();
+    ctx.arc(p.xNorm * w + Math.sin(now * 0.004 + p.xNorm * 20) * 3, ry, p.size * 1.4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Water tint & shimmering wave lines inside pond
+  ctx.fillStyle = `rgba(${Math.round(skyCols.mid[0] * 0.6)}, ${Math.round(skyCols.mid[1] * 0.75)}, ${Math.round(skyCols.mid[2] * 0.9)}, 0.28)`;
+  ctx.fillRect(0, pond.cy - pond.ry - 10, w, pond.ry * 2 + 20);
+
+  // Expanding footstep ripples strictly inside pond
+  pondRipples.forEach(r => {
+    ctx.strokeStyle = `rgba(220, 238, 255, ${r.alpha * 0.5})`;
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(r.xNorm * w, r.yNorm * h, r.radius * 1.6, r.radius * 0.55, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.restore();
+
+  // LAYER 8: Grass Tufts & Fireflies
+  grassTufts.forEach(g => {
+    const gx = g.x * w;
+    const baseY = getGroundY(gx, w, h);
+    const gy = baseY + g.yOff * (h - baseY);
+    if (isPointInPond(gx, gy, w, h)) return;
+    const sway = Math.sin(now * 0.0016 + g.phase) * 3.5;
+    ctx.strokeStyle = `rgba(28, 44, 38, 0.9)`;
+    ctx.lineWidth = 1.4;
+    for (let b = 0; b < g.blades; b++) {
+      const off = (b - 1) * 3.5;
+      ctx.beginPath();
+      ctx.moveTo(gx + off, gy);
+      ctx.quadraticCurveTo(gx + off + sway * 0.5, gy - g.height * 0.5, gx + off + sway + g.lean * 6, gy - g.height);
+      ctx.stroke();
+    }
+  });
+
+  fireflies.forEach(f => {
+    const pulse = Math.max(0, Math.sin(f.phase));
+    const fx = f.x * w;
+    const fy = f.y * h;
+    const fg = ctx.createRadialGradient(fx, fy, 0.5, fx, fy, 9);
+    fg.addColorStop(0, `rgba(225, 240, 150, ${0.8 * pulse})`);
+    fg.addColorStop(1, `rgba(225, 240, 150, 0)`);
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.arc(fx, fy, 9, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // LAYER 10a: Paper Boats on Pond (Nature Letters kept)
+  personalState.paperBoats.forEach(boat => {
+    const bx = boat.nx * w;
+    const by = boat.ny * h + Math.sin(now * 0.002 + boat.phase) * 2.2;
+    ctx.save();
+    ctx.translate(bx, by);
+    ctx.fillStyle = `#f5efe0`;
+    ctx.strokeStyle = `rgba(99, 88, 75, 0.45)`;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-13, 0);
+    ctx.lineTo(13, 0);
+    ctx.lineTo(8, 6);
+    ctx.lineTo(-8, 6);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(-6, 0);
+    ctx.lineTo(0, -9);
+    ctx.lineTo(6, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    ctx.restore();
+  });
+
+  // LAYER 10b: Interactive Fallen Letter Stars
+  fallenLetters.forEach(fl => {
+    const fx = fl.xNorm * w;
+    const fy = (fl.landed ? fl.yNorm : fl.dropY) * h;
+    if (!fl.landed) {
+      const tail = ctx.createLinearGradient(fx, fy - 42, fx, fy);
+      tail.addColorStop(0, `rgba(223, 170, 91, 0)`);
+      tail.addColorStop(1, `rgba(245, 220, 176, 0.85)`);
+      ctx.strokeStyle = tail;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.moveTo(fx, fy - 42);
+      ctx.lineTo(fx, fy);
+      ctx.stroke();
+    }
+    const pulse = 1 + 0.18 * Math.sin(now * 0.004);
+    const rg = ctx.createRadialGradient(fx, fy, 1, fx, fy, 18 * pulse);
+    rg.addColorStop(0, `rgba(255, 252, 235, 0.98)`);
+    rg.addColorStop(0.4, `rgba(223, 170, 91, 0.65)`);
+    rg.addColorStop(1, `rgba(223, 170, 91, 0)`);
+    ctx.fillStyle = rg;
+    ctx.beginPath();
+    ctx.arc(fx, fy, 18 * pulse, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // LAYER 9: Characters (sorted by Y for natural depth)
+  const chars = [];
+  Object.keys(remoteTabs).forEach(pid => chars.push({ obj: remoteTabs[pid], isMe: false }));
+  if (currentPlanetId) chars.push({ obj: player, isMe: true });
+  chars.sort((a, b) => a.obj.y - b.obj.y);
+  chars.forEach(c => drawCharacter(ctx, c.obj, w, h, c.isMe));
+
+  // Water splash droplets (foreground over pond)
+  waterDroplets.forEach(d => {
+    const dx = d.xNorm * w + d.ox;
+    const dy = d.yNorm * h + d.oy;
+    ctx.fillStyle = `rgba(220, 240, 255, ${d.alpha})`;
+    ctx.beginPath();
+    ctx.arc(dx, dy, d.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // LAYER 11: Foreground Soaring Shooting Stars, Fireworks & Release Particles
+  soaringStars.forEach(s => {
+    const sx = s.x * w;
+    const sy = s.y * h;
+    const tx = sx - s.vx * 140;
+    const ty = sy - s.vy * 140;
+    const sg = ctx.createLinearGradient(tx, ty, sx, sy);
+    sg.addColorStop(0, `rgba(223, 170, 91, 0)`);
+    sg.addColorStop(1, `rgba(255, 250, 230, ${s.alpha})`);
+    ctx.strokeStyle = sg;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(tx, ty);
+    ctx.lineTo(sx, sy);
+    ctx.stroke();
+
+    const r = 10 + s.flash * 26;
+    const fg = ctx.createRadialGradient(sx, sy, 1, sx, sy, r);
+    fg.addColorStop(0, `rgba(255, 255, 255, ${s.alpha})`);
+    fg.addColorStop(1, `rgba(223, 170, 91, 0)`);
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.arc(sx, sy, r, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  fireworks.forEach(p => {
+    ctx.fillStyle = `rgba(${p.color.join(`,`)}, ${p.alpha})`;
+    ctx.beginPath();
+    ctx.arc(p.xNorm * w, p.yNorm * h, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  releaseParticles.forEach(p => {
+    ctx.fillStyle = `rgba(245, 220, 176, ${p.alpha})`;
+    ctx.beginPath();
+    ctx.arc(p.xNorm * w, p.yNorm * h, p.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  requestAnimationFrame(renderFrame);
+}
+
+// =========================================================================
+// 14. TIMERS & BOOTSTRAP
+// =========================================================================
+function startWorldSchedulers() {
+  // Auto Sky Color change every 3 minutes
+  setInterval(() => {
+    if (!currentPlanetId) return;
+    const choices = AUTO_SKY_KEYS.filter(k => k !== skyState.targetName);
+    const next = choices[Math.floor(Math.random() * choices.length)];
+    setSkyPalette(next);
+  }, AUTO_SKY_INTERVAL_MS);
+
+  // Auto Letter Drop check every 1 minute (50% chance)
+  setInterval(() => {
+    if (!currentPlanetId) return;
+    if (Math.random() < 0.50) {
+      createAndDropLetterStar();
+    }
+  }, AUTO_DROP_INTERVAL_MS);
+
+  window.addEventListener(`beforeunload`, () => {
+    if (currentPlanetId) {
+      broadcastChannelEmit(`leavePlanet`, { planetId: currentPlanetId });
+    }
+  });
+}
+
+async function bootstrapApp() {
+  initSceneAssets();
+  setupCanvasInteraction();
+  await loadPersistedState();
+  initMultiplayer();
+  startWorldSchedulers();
+
+  if (!personalState.hasSeenGuide) {
+    openModal(`guide-modal`);
+  } else {
+    openPlanetMapModal();
+  }
+
+  requestAnimationFrame(renderFrame);
+  if (window.notebookAppApi && typeof window.notebookAppApi.notifyAppReady === `function`) {
+    window.notebookAppApi.notifyAppReady();
+  }
+}
+
+bootstrapApp();
+</script>
+</body>
+</html>
