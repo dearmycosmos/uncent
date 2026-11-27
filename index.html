@@ -4251,6 +4251,93 @@ async function bootstrapApp() {
 }
 
 bootstrapApp();
+/* =========================================================================
+   [Dear my cosmos] 비밀 익명 대화 신청 및 1:1 수락 모듈
+   ========================================================================= */
+
+// 1. 상대방 캐릭터 클릭 시 비밀 대화 신청
+if (typeof canvas !== 'undefined' && canvas) {
+  canvas.addEventListener('click', (e) => {
+    // 캔버스 상의 클릭 좌표 (0~1 정규화)
+    const rect = canvas.getBoundingClientRect();
+    const clickX = (e.clientX - rect.left) / canvas.width;
+    const clickY = (e.clientY - rect.top) / canvas.height;
+
+    // 주변에 있는 상대방 캐릭터(remoteTabs) 탐색
+    if (typeof remoteTabs !== 'undefined') {
+      for (const id in remoteTabs) {
+        const rp = remoteTabs[id];
+        const dist = Math.hypot(rp.x - clickX, rp.y - clickY);
+        // 캐릭터 반경 근처를 클릭했을 때
+        if (dist < 0.08) {
+          if (confirm('어둠 속의 별 여행자에게 비밀 익명 대화를 신청하시겠습니까?')) {
+            if (typeof socket !== 'undefined' && socket && socket.connected) {
+              socket.emit('adminAction', {
+                type: 'secretChatRequest',
+                fromId: socket.id,
+                targetId: id
+              });
+              alert('신청을 보냈습니다. 상대방의 응답을 기다립니다...');
+            }
+          }
+          return;
+        }
+      }
+    }
+  });
+}
+
+// 2. 소켓 신호 처리 (대화 신청 수신, 수락 응답, 비밀 메시지 송수신)
+if (typeof socket !== 'undefined' && socket) {
+  socket.on('adminAction', (data) => {
+    if (!data) return;
+
+    // A. 누군가 나에게 비밀 대화를 신청했을 때
+    if (data.type === 'secretChatRequest' && data.targetId === socket.id) {
+      const accept = confirm('어둠 속의 한 여행자가 당신에게 비밀 대화를 청했습니다. 수락하시겠습니까?');
+      socket.emit('adminAction', {
+        type: 'secretChatResponse',
+        fromId: socket.id,
+        targetId: data.fromId,
+        accepted: accept
+      });
+      if (accept) {
+        startSecretChatSession(data.fromId);
+      }
+    }
+
+    // B. 내가 보낸 신청에 대해 상대방이 응답했을 때
+    if (data.type === 'secretChatResponse' && data.targetId === socket.id) {
+      if (data.accepted) {
+        alert('상대방이 비밀 대화를 수락했습니다.');
+        startSecretChatSession(data.fromId);
+      } else {
+        alert('상대방이 고요 속에 머물기를 원했습니다.');
+      }
+    }
+
+    // C. 1:1 비밀 메시지 수신
+    if (data.type === 'secretChatMessage' && data.targetId === socket.id) {
+      alert(`[비밀 익명 속삭임]\n"${data.text}"`);
+    }
+  });
+}
+
+// 3. 비밀 대화 입력 및 전송
+function startSecretChatSession(peerId) {
+  const msg = prompt('익명의 상대방에게 전할 비밀 메시지를 입력하세요:');
+  if (msg && msg.trim() !== '') {
+    if (typeof socket !== 'undefined' && socket && socket.connected) {
+      socket.emit('adminAction', {
+        type: 'secretChatMessage',
+        senderId: socket.id,
+        targetId: peerId,
+        text: msg.trim()
+      });
+      alert('비밀 메시지를 전송했습니다.');
+    }
+  }
+}
 </script>
 </body>
 </html>
