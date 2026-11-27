@@ -4291,6 +4291,93 @@ async function bootstrapCosmos() {
 }
 
 window.addEventListener('DOMContentLoaded', bootstrapCosmos);
+/* =========================================================================
+   [Dear my cosmos] 실시간 대화(말풍선) 원클릭 연동 모듈
+   ========================================================================= */
+
+// 1. 상대방이 보낸 대화 메시지 수신 (머리 위 말풍선 5초간 유지)
+if (typeof socket !== 'undefined' && socket) {
+  socket.on('adminAction', (data) => {
+    if (data && data.type === 'peerChat' && data.senderId !== socket.id) {
+      if (typeof remoteTabs !== 'undefined' && remoteTabs[data.senderId]) {
+        remoteTabs[data.senderId].chatMsg = data.text;
+        remoteTabs[data.senderId].chatTimer = Date.now() + 5000;
+      }
+    }
+  });
+}
+
+// 2. 키보드 Enter를 누르면 대화 입력창 실행
+window.addEventListener('keydown', (e) => {
+  // 편지 쓰는 텍스트 창 등에 포커스가 있을 때는 Enter로 대화창이 안 뜨도록 예외 처리
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+  if (e.key === 'Enter') {
+    const msg = prompt('별 여행자에게 전할 말을 입력하세요:');
+    if (msg && msg.trim() !== '') {
+      const cleanMsg = msg.trim();
+
+      // 내 캐릭터 머리 위에 말풍선 5초간 띄우기
+      if (typeof player !== 'undefined') {
+        player.chatMsg = cleanMsg;
+        player.chatTimer = Date.now() + 5000;
+      }
+
+      // 같은 행성에 있는 상대방 노트북으로 대화 전송
+      if (typeof socket !== 'undefined' && socket && socket.connected) {
+        socket.emit('adminAction', {
+          type: 'peerChat',
+          senderId: socket.id,
+          text: cleanMsg
+        });
+      }
+    }
+  }
+});
+
+// 3. 머리 위 말풍선 렌더링 오버레이 (기존 캔버스 위에 자연스럽게 겹쳐서 출력)
+function renderChatBubblesLoop() {
+  requestAnimationFrame(renderChatBubblesLoop);
+
+  const canvas = document.getElementById('universeCanvas') || document.querySelector('canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  // 내 머리 위 말풍선 (하얀빛)
+  if (typeof player !== 'undefined' && player.chatMsg && player.chatTimer > Date.now()) {
+    ctx.save();
+    ctx.font = '14px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+    ctx.shadowBlur = 6;
+    const px = (typeof player.x === 'number' && player.x <= 1 ? player.x * canvas.width : player.x) || canvas.width * 0.5;
+    const py = (typeof player.y === 'number' && player.y <= 1 ? player.y * canvas.height : player.y) || canvas.height * 0.8;
+    ctx.fillText(`💬 ${player.chatMsg}`, px, py - 40);
+    ctx.restore();
+  }
+
+  // 상대방 머리 위 말풍선 (따뜻한 노란 별빛)
+  if (typeof remoteTabs !== 'undefined') {
+    for (const id in remoteTabs) {
+      const rp = remoteTabs[id];
+      if (rp.chatMsg && rp.chatTimer > Date.now()) {
+        ctx.save();
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#ffeaa7';
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.8)';
+        ctx.shadowBlur = 6;
+        const rx = (typeof rp.x === 'number' && rp.x <= 1 ? rp.x * canvas.width : rp.x) || canvas.width * 0.5;
+        const ry = (typeof rp.y === 'number' && rp.y <= 1 ? rp.y * canvas.height : rp.y) || canvas.height * 0.8;
+        ctx.fillText(`💬 ${rp.chatMsg}`, rx, ry - 40);
+        ctx.restore();
+      }
+    }
+  }
+}
+renderChatBubblesLoop();
 </script>
 </body>
 </html>
